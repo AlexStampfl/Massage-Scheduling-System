@@ -1,0 +1,146 @@
+
+var calendarEl = document.getElementById('calendar');
+var calendar = new FullCalendar.Calendar(calendarEl, {
+    initialView: 'dayGridMonth',
+    selectable: true, // allows selecting date/time
+
+    select: function (info) {
+        const modal = document.getElementById("modal");
+        modal.style.display = "block";
+
+        selectedEvent = null; // Means we're adding a new one
+        selectedTimeInfo = info;
+
+
+        // let dateObj = new Date(selectedTimeInfo.startStr);
+        let dateObj = selectedTimeInfo.start;
+        let formattedDate = dateObj.toLocaleDateString(undefined, {
+            weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+        });
+
+        // Check if date <p> already exists
+        let existingDateEl = document.getElementById("modal_date");
+        if (existingDateEl) {
+            existingDateEl.innerHTML = formattedDate;
+        } else {
+            let pickedDay = document.createElement("h1");
+            pickedDay.id = "modal-date"; // give it an ID for future updates
+            pickedDay.innerHTML = formattedDate;
+            document.getElementById("modal").prepend(pickedDay);
+        }
+        // let pickedDay = document.getElementById("modal_date").innerHTML = selectedEvent.formattedDate;
+    },
+
+
+    // SHOW MODAL ON EXISTING EVENT CLICK
+    eventClick: function (info) {
+        const modal = document.getElementById("modal");
+        modal.style.display = "block";
+
+        selectedEvent = info.event;
+        selectedTimeInfo = null;
+
+        // Pre-fill modal fields
+        document.getElementById("addTitle").value = info.event.title;
+        document.getElementById("editStart").value = info.event.startStr.slice(0, 16); // startStr is a property of the time, includes time, date and time zone
+        document.getElementById("editEnd").value = info.event.endStr ? info.event.endStr.slice(0, 16) : ""; // endStr is a property of the time, both are used for the time format
+        document.getElementById("notes").value = info.event.extendedProps?.notes || "";
+    },
+
+    headerToolbar: {
+        left: 'prev,next today',
+        center: 'title',
+        right: 'dayGridMonth,timeGridWeek,timeGridDay'
+    },
+    events: [
+        {
+            // title: 'All Day Event',
+            // start: '2025-05-11'
+        },
+        {
+            // title: 'Quit Amazon',
+            // start: '2025-05-19T07:30:00',
+            // end: '2025-05-19T18:00:00'
+        }
+
+    ],
+    eventColor: 'violet'
+});
+
+calendar.render();
+
+let selectedEvent = null;
+let selectedTimeInfo = null;
+
+
+
+// Event listener for the Save Button in the modal
+document.getElementById("save").addEventListener("click", function () {
+    const title = document.getElementById("addTitle").value;
+    // const start = document.getElementById("editStart").value;
+    const startTime = document.getElementById("editStart").value;
+    const endTime = document.getElementById("editEnd").value;
+    const notes = document.getElementById("notes").value;
+
+    // Extract date from `selectedTimeInfo`
+    let date = null;
+
+    // If adding a new event, get clicked date
+    if (selectedTimeInfo) {
+        date = selectedTimeInfo.startStr.split("T")[0]; // "2025-05-21"
+    } else if (selectedEvent) {
+        date = selectedEvent.startStr.split("T")[0];
+    }
+
+    const start = `${date}T${startTime}`;
+    const end = `${date}T${endTime}`;
+
+
+    if (!title || !start) {
+        alert("Title and start time are required.");
+        return;
+    }
+
+    if (selectedEvent) {
+        // Edit an existing event
+        selectedEvent.setProp("title", title);
+        selectedEvent.setDates(start, end, { allDay: false });
+        selectedEvent.setExtendedProp("notes", notes);
+    } else if (selectedTimeInfo) {
+        // Create new event
+        calendar.addEvent({
+            title: title,
+            start: start,
+            end: end,
+            allDay: false,
+            extendedProps: {
+                notes: notes
+            }
+        });
+    }
+
+    // Reset and close the modal
+    document.getElementById("modal").style.display = "none";
+    selectedEvent = null;
+    selectedTimeInfo = null;
+
+    //clear model fields
+    document.getElementById("addTitle").value = "";
+    document.getElementById("editStart").value = "";
+    document.getElementById("editEnd").value = "";
+    document.getElementById("notes").value = "";
+});
+
+
+function myModal() {
+    const modal = document.getElementById("modal");
+    const closeModalBtn = document.querySelector(".close-btn");
+
+    if (closeModalBtn) {
+        closeModalBtn.addEventListener("click", () => {
+            modal.style.display = "none"
+        });
+    }
+}
+
+myModal();
