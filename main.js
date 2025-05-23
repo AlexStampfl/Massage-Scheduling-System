@@ -28,6 +28,12 @@ var calendar = new FullCalendar.Calendar(calendarEl, {
         const modal = document.getElementById("modal");
         modal.style.display = "block";
 
+        //clear model fields
+    document.getElementById("addTitle").value = "";
+    document.getElementById("editStart").value = "";
+    document.getElementById("editEnd").value = "";
+    document.getElementById("notes").value = "";
+
         selectedEvent = info.event;
         selectedTimeInfo = null;
 
@@ -120,7 +126,7 @@ function handleSaveClick() {
     selectedEvent = null;
     selectedTimeInfo = null;
 
-    //clear model fields
+    // //clear model fields
     document.getElementById("addTitle").value = "";
     document.getElementById("editStart").value = "";
     document.getElementById("editEnd").value = "";
@@ -142,4 +148,22 @@ function myModal() {
     }
 }
 
+// Delete appointment (Not cancel, just delete)
+function deleteAppointment() {
+    const deleteEvent = document.getElementById("delete_event");
+
+    deleteEvent.addEventListener('click', ()=> {
+        if(selectedEvent) {
+            selectedEvent.remove(); // Deletes event from calendar
+            selectedEvent = null; // Reset selection
+            document.getElementById("addTitle").value = "";
+            document.getElementById("editStart").value = "";
+            document.getElementById("editEnd").value = "";
+            document.getElementById("notes").value = "";
+            document.getElementById("modal").style.display = "none"; // close the modal
+        }
+    });
+}
+
 myModal();
+deleteAppointment();

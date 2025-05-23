@@ -53,7 +53,7 @@
     text-align: center;
     padding: 10px;
     background-color: lightblue;
-    margin: 10px;
+    margin-left: 48px;
     width: 25%;
     border-radius: 15px;
 }
@@ -78,4 +78,8 @@ label {
     font-weight: bold;
     font-size: 1.2rem;
     margin-bottom: 10px; 
+}
+#delete_event {
+    background-color: black;
+    float: right;
 }
