@@ -54,7 +54,7 @@ var calendar = new FullCalendar.Calendar(calendarEl, {
         clients: {
             text: 'clients',
             click: function() {
-                alert("Add clients");
+                window.location.href = "./client_list.html";
             }
         }
     },
