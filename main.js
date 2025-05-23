@@ -1,4 +1,4 @@
-
+// Initialize calendar
 var calendarEl = document.getElementById('calendar');
 var calendar = new FullCalendar.Calendar(calendarEl, {
     initialView: 'dayGridMonth',
@@ -11,26 +11,17 @@ var calendar = new FullCalendar.Calendar(calendarEl, {
         selectedEvent = null; // Means we're adding a new one
         selectedTimeInfo = info;
 
-
-        // let dateObj = new Date(selectedTimeInfo.startStr);
+        // Shows the Date/Day you clicked on in the modal's header
         let dateObj = selectedTimeInfo.start;
         let formattedDate = dateObj.toLocaleDateString(undefined, {
             weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
         });
 
-        // Check if date <p> already exists
-        let existingDateEl = document.getElementById("modal_date");
-        if (existingDateEl) {
-            existingDateEl.innerHTML = formattedDate;
-        } else {
-            let pickedDay = document.createElement("h1");
-            pickedDay.id = "modal-date"; // give it an ID for future updates
-            pickedDay.innerHTML = formattedDate;
-            document.getElementById("modal").prepend(pickedDay);
+        let existingDate = document.getElementById("modal_date");
+        if (existingDate) {
+            existingDate.innerHTML = formattedDate;
         }
-        // let pickedDay = document.getElementById("modal_date").innerHTML = selectedEvent.formattedDate;
     },
-
 
     // SHOW MODAL ON EXISTING EVENT CLICK
     eventClick: function (info) {
@@ -47,10 +38,19 @@ var calendar = new FullCalendar.Calendar(calendarEl, {
         document.getElementById("notes").value = info.event.extendedProps?.notes || "";
     },
 
+    // Calendar header options
     headerToolbar: {
-        left: 'prev,next today',
+        left: 'prev,next today clients',
         center: 'title',
         right: 'dayGridMonth,timeGridWeek,timeGridDay'
+    },
+    customButtons: {
+        clients: {
+            text: 'clients',
+            click: function() {
+                alert("Add clients");
+            }
+        }
     },
     events: [
         {
@@ -72,12 +72,9 @@ calendar.render();
 let selectedEvent = null;
 let selectedTimeInfo = null;
 
-
-
 // Event listener for the Save Button in the modal
-document.getElementById("save").addEventListener("click", function () {
+function handleSaveClick() {
     const title = document.getElementById("addTitle").value;
-    // const start = document.getElementById("editStart").value;
     const startTime = document.getElementById("editStart").value;
     const endTime = document.getElementById("editEnd").value;
     const notes = document.getElementById("notes").value;
@@ -94,7 +91,6 @@ document.getElementById("save").addEventListener("click", function () {
 
     const start = `${date}T${startTime}`;
     const end = `${date}T${endTime}`;
-
 
     if (!title || !start) {
         alert("Title and start time are required.");
@@ -129,9 +125,12 @@ document.getElementById("save").addEventListener("click", function () {
     document.getElementById("editStart").value = "";
     document.getElementById("editEnd").value = "";
     document.getElementById("notes").value = "";
-});
+}
 
+// Function call
+document.getElementById("save").addEventListener("click", handleSaveClick);
 
+// Exit modal
 function myModal() {
     const modal = document.getElementById("modal");
     const closeModalBtn = document.querySelector(".close-btn");
