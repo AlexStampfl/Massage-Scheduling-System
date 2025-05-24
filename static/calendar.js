@@ -28,7 +28,7 @@ var calendar = new FullCalendar.Calendar(calendarEl, {
         const modal = document.getElementById("modal");
         modal.style.display = "block";
 
-        //clear model fields
+    //clear model fields
     document.getElementById("addTitle").value = "";
     document.getElementById("editStart").value = "";
     document.getElementById("editEnd").value = "";
@@ -54,7 +54,7 @@ var calendar = new FullCalendar.Calendar(calendarEl, {
         clients: {
             text: 'clients',
             click: function() {
-                window.location.href = "./client_list.html";
+                window.location.href = "/client_list";
             }
         }
     },
@@ -88,7 +88,7 @@ function handleSaveClick() {
     // Extract date from `selectedTimeInfo`
     let date = null;
 
-    // If adding a new event, get clicked date
+    // If adding a new event, display clicked date
     if (selectedTimeInfo) {
         date = selectedTimeInfo.startStr.split("T")[0]; // "2025-05-21"
     } else if (selectedEvent) {

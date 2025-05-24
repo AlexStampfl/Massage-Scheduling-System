@@ -2,24 +2,14 @@
 const nav = document.getElementById("go_to_calendar");
 if (nav) {
     nav.addEventListener('click', () => {
-        window.location.href = "./main.html";
+        window.location.href = "/main";
     });
 }
-
 
 const tbody = document.getElementById("clientTableBody");
 const row = document.createElement("tr");
 
-row.innerHTML = `
-    <td><input type="checkbox"></td>
-    <td>Doe</td>
-    <td>John</td>
-    <td>(555) 123-4567</td>
-    <td>john@example.com</td>
-    <td>Active</td>
-`;
 tbody.appendChild(row);
-
 
 const add_client = document.getElementById("add_client");
 
@@ -27,6 +17,7 @@ add_client.addEventListener('click', () => {
     const tbody = document.getElementById("clientTableBody")
     const row = document.createElement("tr");
     
+    // Form to fill out to add client
     row.innerHTML = `
     <td><input type="checkbox"></td>
     <td><input type="firstname" name="lastname"></td>
@@ -44,6 +35,7 @@ row.querySelector(".submit-client").addEventListener('click', () => {
     const phone = row.querySelector('[name="phone"]').value;
     const email = row.querySelector('[name="email"]').value;
 
+    // Submits data into client list
     row.innerHTML = `
         <td><input type="checkbox" /></td>
         <td>${last}</td>
@@ -53,4 +45,6 @@ row.querySelector(".submit-client").addEventListener('click', () => {
         <td>Active</td>
         `;
     });
+    // localStorage.setItem('lastname', 'Doe');
+    // localStorage.setItem('firstname', 'John');
 });
