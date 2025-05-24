@@ -29,22 +29,50 @@ add_client.addEventListener('click', () => {
 
 tbody.appendChild(row);
 
-row.querySelector(".submit-client").addEventListener('click', () => {
+// Just updates the UI
+// row.querySelector(".submit-client").addEventListener('click', () => {
+//     const first = row.querySelector('[name="firstname"]').value;
+//     const last = row.querySelector('[name="lastname"]').value;
+//     const phone = row.querySelector('[name="phone"]').value;
+//     const email = row.querySelector('[name="email"]').value;
+
+//     // Submits data into client list
+//     row.innerHTML = `
+//         <td><input type="checkbox" /></td>
+//         <td>${last}</td>
+//         <td>${first}</td>
+//         <td>${phone}</td>
+//         <td>${email}</td>
+//         <td>Active</td>
+//         `;
+//     });
+
+// Connects to DB and we have data peristence!
+row.querySelector(".submit-client").addEventListener("click", async (e) => {
+    e.preventDefault();
+
     const first = row.querySelector('[name="firstname"]').value;
     const last = row.querySelector('[name="lastname"]').value;
     const phone = row.querySelector('[name="phone"]').value;
     const email = row.querySelector('[name="email"]').value;
 
-    // Submits data into client list
-    row.innerHTML = `
-        <td><input type="checkbox" /></td>
-        <td>${last}</td>
-        <td>${first}</td>
-        <td>${phone}</td>
-        <td>${email}</td>
-        <td>Active</td>
-        `;
+    // This is where the magic happens
+    const response = await fetch("/add-client", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/x-www-form-urlencoded"
+        },
+        body: new URLSearchParams({ first, last, phone, email})
     });
-    // localStorage.setItem('lastname', 'Doe');
-    // localStorage.setItem('firstname', 'John');
+
+    if (response.ok) {
+        window.location.reload(); // Refresh page to pull from DB
+    } else {
+        alert("Failed to add client");
+    }
+
+
+})
+
+
 });

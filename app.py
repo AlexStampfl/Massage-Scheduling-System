@@ -3,13 +3,18 @@
 
 from flask import Flask, render_template, request, redirect, url_for
 import sqlite3
+import os
+
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+DB_PATH = os.path.join(BASE_DIR, "client.db")
 
 # Initialize Flask
 app = Flask(__name__) # Flask constructor, creates the Flask app
 
 
 def init_db():
-    conn = sqlite3.connect('client.db')
+    # conn = sqlite3.connect('client.db')
+    conn = sqlite3.connect(DB_PATH)
     c = conn.cursor()
     c.execute('''
               CREATE TABLE IF NOT EXISTS clients (
@@ -27,7 +32,10 @@ def init_db():
 # A decorator used to tell the application which URL is associated function
 @app.route('/') # Defines the home route(/), # A decoraor to route URL, '/' means the root URL
 def index(): # Creates a function bound with '/' route
-    conn = sqlite3.connect('client.db')
+
+    # conn = sqlite3.connect('client.db')
+    conn = sqlite3.connect(DB_PATH)
+    
     c = conn.cursor()
     c.execute('SELECT * FROM clients')
     clients = c.fetchall()
@@ -43,7 +51,10 @@ def add_client():
     phone = request.form['phone']
     email = request.form['email']
 
-    conn = sqlite3.connect('client.db')
+    print("Adding client:", first, last, phone, email)
+
+    # conn = sqlite3.connect('client.db')
+    conn = sqlite3.connect(DB_PATH)
     c = conn.cursor()
     c.execute('INSERT INTO clients (first_name, last_name, phone, email) VALUES (?, ?, ?, ?)',
               (first, last, phone, email))
@@ -59,7 +70,9 @@ def calendar():
 # URL to 'client_list.html'
 @app.route('/client_list')
 def client_list():
-    conn = sqlite3.connect('client.db') # connects to sqlite database file named client.db, conn is the connection object used to talk to db
+    # conn = sqlite3.connect('client.db') # connects to sqlite database file named client.db, conn is the connection object used to talk to db
+    conn = sqlite3.connect(DB_PATH)
+
     c = conn.cursor() # cursor object lets you execute SQL statements (queries) against db
     c.execute('SELECT * FROM clients')
     clients = c.fetchall() # Fetches all rows that query returned, clients is a list of tuples
