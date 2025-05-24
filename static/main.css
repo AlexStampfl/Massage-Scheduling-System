@@ -144,6 +144,9 @@ table th {
 #go_to_calendar {
     padding: 5px 10px;
 }
+#export_client_list {
+    padding: 5px 10px;
+}
 #trash_can {
     width: 35px;
     height: 35px;

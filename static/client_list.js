@@ -29,24 +29,6 @@ add_client.addEventListener('click', () => {
 
 tbody.appendChild(row);
 
-// Just updates the UI
-// row.querySelector(".submit-client").addEventListener('click', () => {
-//     const first = row.querySelector('[name="firstname"]').value;
-//     const last = row.querySelector('[name="lastname"]').value;
-//     const phone = row.querySelector('[name="phone"]').value;
-//     const email = row.querySelector('[name="email"]').value;
-
-//     // Submits data into client list
-//     row.innerHTML = `
-//         <td><input type="checkbox" /></td>
-//         <td>${last}</td>
-//         <td>${first}</td>
-//         <td>${phone}</td>
-//         <td>${email}</td>
-//         <td>Active</td>
-//         `;
-//     });
-
 // Connects to DB and we have data peristence!
 row.querySelector(".submit-client").addEventListener("click", async (e) => {
     e.preventDefault();
@@ -73,6 +55,4 @@ row.querySelector(".submit-client").addEventListener("click", async (e) => {
 
 
 })
-
-
 });
