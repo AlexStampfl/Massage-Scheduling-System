@@ -40,7 +40,8 @@ def index(): # Creates a function bound with '/' route
     c.execute('SELECT * FROM clients')
     clients = c.fetchall()
     conn.close()
-    return render_template('client_list.html', clients=clients)
+    # return render_template('client_list.html', clients=clients)
+    return render_template('main.html', calendar=calendar)
 
 
 # Route URL for add-client page

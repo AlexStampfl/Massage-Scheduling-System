@@ -12,7 +12,7 @@
                 <h1 id="client_list_h1">Client List</h1>
                 <div class="header-buttons">
                     <button id="go_to_calendar">Calendar</button>
-                    <button id="export_client_list">Export List</button>
+                    <button id="export_client_list">Import/Export</button>
                     <button id="add_client">Add Client</button>
                 </div>
             </div>
@@ -20,13 +20,15 @@
 
         <table>
             <thead>
-                <tr>
+                <tr id="client_list_headers">
+                    <!-- These are the headers in the client list -->
                     <th><input type="checkbox"></th>
                     <th>Last Name</th>
                     <th>First Name</th>
                     <th>Phone</th>
                     <th>Email</th>
                     <th>Account</th>
+                    <th></th>
                 </tr>
             </thead>
 
@@ -39,6 +41,15 @@
                     <td>{{ client[3] }}</td>
                     <td>{{ client[4] }}</td>
                     <td>Active</td>
+                    <td class="menu_cell">
+                        <div class="menu-container">
+                            <img class="meatballs" src = "{{ url_for('static', filename='img/meatball_menu.png') }}" alt="3 dots">
+                            <div class="dropdown_menu">
+                                <button>Edit</button>
+                                <button>Delete</button>
+                            </div>
+                        </div>
+                    </td>
                 </tr>
                 {% endfor %}
             </tbody>

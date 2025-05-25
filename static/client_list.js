@@ -6,6 +6,11 @@ if (nav) {
     });
 }
 
+// Export client list to csv file
+function exportList() {
+    document.getElementById('export_client_list')
+}
+
 const tbody = document.getElementById("clientTableBody");
 const row = document.createElement("tr");
 
@@ -54,5 +59,24 @@ row.querySelector(".submit-client").addEventListener("click", async (e) => {
     }
 
 
-})
+    })
+});
+
+
+
+document.addEventListener('click', (e) => {
+    const isMenuIcon = e.target.classList.contains('meatballs');
+
+    // Close all open menus
+    document.querySelectorAll('.dropdown_menu').forEach(menu => {
+        menu.style.display = 'none';
+    });
+
+    if (isMenuIcon) {
+        const menu = e.target.nextElementSibling;
+        if (menu) {
+            menu.style.display = 'block';
+        }
+        e.stopPropagation();
+    }
 });
