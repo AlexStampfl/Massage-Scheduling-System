@@ -106,6 +106,7 @@ document.querySelectorAll(".edit_client").forEach(button => {
     });
 
 
+// Edit and Update client
 function updateClientInfo() {
     // Listener for saving updates via PUT request
     document.querySelector('#editForm').addEventListener('submit', async function(e) {
@@ -137,6 +138,29 @@ function updateClientInfo() {
     })
 }
 
+
+// Delete Client
+function deleteClient() {
+    document.addEventListener('click', async (e) => {
+        if (e.target && e.target.classList.contains('delete_client')) {
+            const clientId = e.target.dataset.id;
+            const confirmed = confirm("Are you sure you want to delete this client?");
+            if (!confirmed) return;
+
+            const res = await fetch(`/delete-client/${clientId}`, {
+                method: 'DELETE'
+            });
+        
+            if (res.ok) {
+                location.reload();
+            } else {
+                alert("Failed to delete client.");
+            }
+        }
+    });
+}
+
+
 // Exit modal
 function myModal() {
     const modal = document.getElementById("modal");
@@ -151,3 +175,4 @@ function myModal() {
 
 updateClientInfo();
 myModal();
+deleteClient();

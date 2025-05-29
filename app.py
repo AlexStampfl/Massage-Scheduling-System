@@ -105,7 +105,7 @@ def get_client(id):
 @app.route('/update-client/<int:client_id>', methods=['PUT'])
 def update_client(client_id):
     data = request.get_json()
-    
+
     first = data['first']
     last = data['last']
     phone = data['phone']
@@ -121,6 +121,17 @@ def update_client(client_id):
     conn.commit()
     conn.close()
     return jsonify({'status': 'success'}), 200
+
+
+# DELETE method to delete client from client list
+@app.route('/delete-client/<int:client_id>', methods=['DELETE'])
+def delete_client(client_id):
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
+    c.execute('DELETE FROM clients WHERE id = ?', (client_id,))
+    conn.commit()
+    conn.close()
+    return jsonify({'status': 'deleted'}), 200
 
 
 

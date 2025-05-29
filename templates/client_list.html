@@ -36,8 +36,8 @@
                 {% for client in clients %}
                 <tr>
                     <td><input type="checkbox"></td>
-                    <td>{{ client[1] }}</td>
                     <td>{{ client[2] }}</td>
+                    <td>{{ client[1] }}</td>
                     <td>{{ client[3] }}</td>
                     <td>{{ client[4] }}</td>
                     <td>Active</td>
@@ -45,9 +45,8 @@
                         <div class="menu-container">
                             <img class="meatballs" src = "{{ url_for('static', filename='img/meatball_menu.png') }}" alt="3 dots">
                             <div class="dropdown_menu">
-                                <!-- <button class="edit_client">Edit</button> -->
-                                 <button class="edit_client" data-id="{{ client[0] }}">Edit</button>
-                                <button>Delete</button>
+                                <button class="edit_client" data-id="{{ client[0] }}">Edit</button>
+                                <button class="delete_client" data-id="{{ client[0] }}">Delete</button>
                             </div>
                         </div>
                     </td>
@@ -63,13 +62,13 @@
             <br>
             <form id="editForm">
                 <input type="hidden" id="editClientId">
-                <label class="client_info">First Name</label>
-                <br>
-                <input type="text" name="firstname" placeholder="First Name">
-                <br><br>
                 <label class="client_info">Last Name</label>
                 <br>
                 <input type="text" name="lastname" placeholder="Last Name">
+                <br><br>
+                <label class="client_info">First Name</label>
+                <br>
+                <input type="text" name="firstname" placeholder="First Name">
                 <br><br>
                 <label class="client_info">Phone Number</label>
                 <br>
