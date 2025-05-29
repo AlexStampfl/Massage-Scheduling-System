@@ -23,7 +23,7 @@ var calendar = new FullCalendar.Calendar(calendarEl, {
         }
     },
 
-    // SHOW MODAL ON EXISTING EVENT CLICK
+    // the click event for the modal
     eventClick: function (info) {
         const modal = document.getElementById("modal");
         modal.style.display = "block";

@@ -62,21 +62,92 @@ row.querySelector(".submit-client").addEventListener("click", async (e) => {
     })
 });
 
-
-
+// Meatball menu on right end of client list
 document.addEventListener('click', (e) => {
     const isMenuIcon = e.target.classList.contains('meatballs');
 
-    // Close all open menus
+    // Closes all open menus, so only one menu is open at a time
     document.querySelectorAll('.dropdown_menu').forEach(menu => {
         menu.style.display = 'none';
     });
 
-    if (isMenuIcon) {
+    if (isMenuIcon) { // if correct meatball menu is clicked
         const menu = e.target.nextElementSibling;
-        if (menu) {
+        if (menu) { // Shows the correct dropdown menu based on row that was clicked
             menu.style.display = 'block';
         }
         e.stopPropagation();
     }
 });
+
+
+// event listener for modal #2 when the client list 'edit' is clicked
+// Use class rather than id
+document.querySelectorAll(".edit_client").forEach(button => {
+    button.addEventListener("click", async () => {
+        // Fetch data from database to populate the input fields and then edit and save them
+        const modal = document.getElementById("modal");
+        const clientId = button.dataset.id; // assumes your button has a data-id attribute
+
+        // Set hidden input value so PUT uses the right ID
+        document.querySelector('#editClientId').value = clientId;
+
+        // How the frontend (JS in browser) requests data from the backend (Flask)
+        const res = await fetch(`/client/${clientId}`);
+        const client = await res.json();
+        
+        document.querySelector('[name="firstname"]').value = client.first_name;
+        document.querySelector('[name="lastname"]').value = client.last_name;
+        document.querySelector('[name="phone"]').value = client.phone;
+        document.querySelector('[name="email"]').value = client.email;
+    
+        modal.style.display = "block";
+    });
+    });
+
+
+function updateClientInfo() {
+    // Listener for saving updates via PUT request
+    document.querySelector('#editForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+
+        const clientId = document.querySelector('#editClientId').value;
+
+        const updateData = {
+            first: document.querySelector('[name="firstname"]').value,
+            last: document.querySelector('[name="lastname"]').value,
+            phone: document.querySelector('[name="phone"]').value,
+            email: document.querySelector('[name="email"]').value,
+        };
+
+        const response = await fetch(`/update-client/${clientId}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(updateData)
+        });
+
+        if (response.ok) {
+            console.log("Client updated successfully");
+            location.reload();
+        } else {
+            alert("Failed to update client.");
+        }
+    })
+}
+
+// Exit modal
+function myModal() {
+    const modal = document.getElementById("modal");
+    const closeModalBtn = document.querySelector(".close-btn");
+
+    if (closeModalBtn) {
+        closeModalBtn.addEventListener("click", () => {
+            modal.style.display = "none"
+        });
+    }
+}
+
+updateClientInfo();
+myModal();

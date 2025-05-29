@@ -1,9 +1,10 @@
 # venv\Scripts\activate - to activate your virtual environment
 # python app.py
 
-from flask import Flask, render_template, request, redirect, url_for
+from flask import Flask, jsonify, render_template, request, redirect, url_for
 import sqlite3
 import os
+
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DB_PATH = os.path.join(BASE_DIR, "client.db")
@@ -81,7 +82,50 @@ def client_list():
     return render_template('client_list.html', clients=clients)
 
 
+# Get client details to populate modal input fields
+@app.route('/client/<int:id>')
+def get_client(id):
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
+    c.execute('SELECT first_name, last_name, phone, email FROM clients WHERE id = ?', (id,))
+    client = c.fetchone()
+    conn.close()
+    if client:
+        return jsonify({
+            'first_name': client[0],
+            'last_name': client[1],
+            'phone': client[2],
+            'email': client[3]
+        })
+    else:
+        return jsonify({'error': 'Client not found'}), 404
 
+
+# PUT method to update data in DB
+@app.route('/update-client/<int:client_id>', methods=['PUT'])
+def update_client(client_id):
+    data = request.get_json()
+    
+    first = data['first']
+    last = data['last']
+    phone = data['phone']
+    email = data['email']
+
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
+    c.execute('''
+        UPDATE clients
+        SET first_name = ?, last_name = ?, phone = ?, email = ?
+        WHERE id = ?
+    ''', (first, last, phone, email, client_id))
+    conn.commit()
+    conn.close()
+    return jsonify({'status': 'success'}), 200
+
+
+
+
+# End of app
 if __name__ == '__main__':
     init_db()
     app.run(debug=True) # Runs the app in debug mode

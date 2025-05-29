@@ -45,7 +45,8 @@
                         <div class="menu-container">
                             <img class="meatballs" src = "{{ url_for('static', filename='img/meatball_menu.png') }}" alt="3 dots">
                             <div class="dropdown_menu">
-                                <button>Edit</button>
+                                <!-- <button class="edit_client">Edit</button> -->
+                                 <button class="edit_client" data-id="{{ client[0] }}">Edit</button>
                                 <button>Delete</button>
                             </div>
                         </div>
@@ -54,6 +55,39 @@
                 {% endfor %}
             </tbody>
         </table>
+    </div>
+    <div id="modal" class="modal">
+        <div class="client_modal_content">
+            <span class="close-btn">&times;</span> <!-- this is what makes the x to close the window happen -->
+            <h1 id="edit_client_h1">Edit Client Info</h1>
+            <br>
+            <form id="editForm">
+                <input type="hidden" id="editClientId">
+                <label class="client_info">First Name</label>
+                <br>
+                <input type="text" name="firstname" placeholder="First Name">
+                <br><br>
+                <label class="client_info">Last Name</label>
+                <br>
+                <input type="text" name="lastname" placeholder="Last Name">
+                <br><br>
+                <label class="client_info">Phone Number</label>
+                <br>
+                <input type="phone" name="phone" placeholder="(###) ###-####">
+                <br><br>
+                <label class="client_info">Email</label>
+                <br>
+                <input type="email" name="email" placeholder="Email">
+                <br>
+                <br><br>
+                <textarea id="notes" placeholder="Add notes" rows="5" cols="35"></textarea>
+                <br><br>
+                <span id="save-button"><button id="save" type="submit">Save</button></span>
+                <button id="delete_event">
+                    <img id="trash_can" src="{{ url_for('static', filename='img/white_trash_can.png') }}" alt="Delete trash can icon">
+                </button>
+            </form>
+        </div>
     </div>
         <script src = "{{ url_for('static', filename = 'client_list.js') }}" defer></script>
 </body>
