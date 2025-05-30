@@ -70,6 +70,10 @@ var calendar = new FullCalendar.Calendar(calendarEl, {
         }
 
     ],
+    // plugins: [ window.FullCalendarInteraction ], // required for events to be draggable as per docs: https://fullcalendar.io/docs/editable
+    // plugins: [ 'interaction' ],
+    editable: true, // determines if the events can be dragged and resized
+    eventStartEditable: true,
     eventColor: 'violet'
 });
 

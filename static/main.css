@@ -246,3 +246,8 @@ table th {
 .client_info {
     color: black;
 }
+
+#modal #notes {
+    text-align: left;
+    vertical-align: top;
+}

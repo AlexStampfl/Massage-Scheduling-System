@@ -27,6 +27,7 @@
                     <th>First Name</th>
                     <th>Phone</th>
                     <th>Email</th>
+                    <th>Notes</th>
                     <th>Account</th>
                     <th></th>
                 </tr>
@@ -36,10 +37,11 @@
                 {% for client in clients %}
                 <tr>
                     <td><input type="checkbox"></td>
-                    <td>{{ client[2] }}</td>
-                    <td>{{ client[1] }}</td>
-                    <td>{{ client[3] }}</td>
-                    <td>{{ client[4] }}</td>
+                    <td>{{ client[2] if client[2] else "" }}</td>
+                    <td>{{ client[1] if client[1] else "" }}</td>
+                    <td>{{ client[3] if client[3] else "" }}</td>
+                    <td>{{ client[4] if client[4] else "" }}</td>
+                    <td>{{ client[6] if client[6] else "" }}</td>
                     <td>Active</td>
                     <td class="menu_cell">
                         <div class="menu-container">
@@ -79,7 +81,9 @@
                 <input type="email" name="email" placeholder="Email">
                 <br>
                 <br><br>
-                <textarea id="notes" placeholder="Add notes" rows="5" cols="35"></textarea>
+                <label>Client Notes (Internal use - visible to therapists only)</label>
+                <br>
+                <textarea id="notes" placeholder="Add notes" rows="5" cols="35" name="notes"></textarea>
                 <br><br>
                 <span id="save-button"><button id="save" type="submit">Save</button></span>
                 <button id="delete_event">

@@ -26,9 +26,10 @@ add_client.addEventListener('click', () => {
     row.innerHTML = `
     <td><input type="checkbox"></td>
     <td><input type="firstname" name="lastname"></td>
-    <td><input type="lastname" name="firstname"</td>
+    <td><input type="lastname" name="firstname"></td>
     <td><input type="phone" name="phone"></td>
-    <td><input type="email" name="email"</td>
+    <td><input type="email" name="email"></td>
+    <td><textarea name="notes"></textarea></td>
     <td><button class="submit-client">✔</button></td>
 `;
 
@@ -42,6 +43,7 @@ row.querySelector(".submit-client").addEventListener("click", async (e) => {
     const last = row.querySelector('[name="lastname"]').value;
     const phone = row.querySelector('[name="phone"]').value;
     const email = row.querySelector('[name="email"]').value;
+    const notes = row.querySelector('[name="notes"]').value; // Just added
 
     // This is where the magic happens
     const response = await fetch("/add-client", {
@@ -49,7 +51,7 @@ row.querySelector(".submit-client").addEventListener("click", async (e) => {
         headers: {
             "Content-Type": "application/x-www-form-urlencoded"
         },
-        body: new URLSearchParams({ first, last, phone, email})
+        body: new URLSearchParams({ first, last, phone, email, notes})
     });
 
     if (response.ok) {
@@ -100,6 +102,7 @@ document.querySelectorAll(".edit_client").forEach(button => {
         document.querySelector('[name="lastname"]').value = client.last_name;
         document.querySelector('[name="phone"]').value = client.phone;
         document.querySelector('[name="email"]').value = client.email;
+        document.querySelector('[name="notes"]').value = client.notes; // Just added at 7:37 5/30/25
     
         modal.style.display = "block";
     });
@@ -119,6 +122,7 @@ function updateClientInfo() {
             last: document.querySelector('[name="lastname"]').value,
             phone: document.querySelector('[name="phone"]').value,
             email: document.querySelector('[name="email"]').value,
+            notes: document.querySelector('[name="notes"]').value, // Just added
         };
 
         const response = await fetch(`/update-client/${clientId}`, {
