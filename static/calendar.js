@@ -29,7 +29,8 @@ var calendar = new FullCalendar.Calendar(calendarEl, {
         modal.style.display = "block";
 
     //clear model fields
-    document.getElementById("addTitle").value = "";
+    // document.getElementById("addTitle").value = "";
+    document.getElementById("appointmentType").value = "";
     document.getElementById("editStart").value = "";
     document.getElementById("editEnd").value = "";
     document.getElementById("notes").value = "";
@@ -38,7 +39,8 @@ var calendar = new FullCalendar.Calendar(calendarEl, {
         selectedTimeInfo = null;
 
         // Pre-fill modal fields
-        document.getElementById("addTitle").value = info.event.title;
+        // document.getElementById("addTitle").value = info.event.title;
+        document.getElementById("appointmentType").value = info.event.appointment;
         document.getElementById("editStart").value = info.event.startStr.slice(0, 16); // startStr is a property of the time, includes time, date and time zone
         document.getElementById("editEnd").value = info.event.endStr ? info.event.endStr.slice(0, 16) : ""; // endStr is a property of the time, both are used for the time format
         document.getElementById("notes").value = info.event.extendedProps?.notes || "";
@@ -70,11 +72,9 @@ var calendar = new FullCalendar.Calendar(calendarEl, {
         }
 
     ],
-    // plugins: [ window.FullCalendarInteraction ], // required for events to be draggable as per docs: https://fullcalendar.io/docs/editable
-    // plugins: [ 'interaction' ],
     editable: true, // determines if the events can be dragged and resized
     eventStartEditable: true,
-    eventColor: 'violet'
+    eventColor: 'violet',
 });
 
 calendar.render();
@@ -84,7 +84,8 @@ let selectedTimeInfo = null;
 
 // Event listener for the Save Button in the modal
 function handleSaveClick() {
-    const title = document.getElementById("addTitle").value;
+    // const title = document.getElementById("addTitle").value;
+    const appointment = document.getElementById("appointmentType").value; // drop down menu with options
     const startTime = document.getElementById("editStart").value;
     const endTime = document.getElementById("editEnd").value;
     const notes = document.getElementById("notes").value;
@@ -99,26 +100,54 @@ function handleSaveClick() {
         date = selectedEvent.startStr.split("T")[0];
     }
 
-    const start = `${date}T${startTime}`;
-    const end = `${date}T${endTime}`;
+    // const start = `${date}T${startTime}`;
+    // const end = `${date}T${endTime}`;
 
-    if (!title || !start) {
-        alert("Title and start time are required.");
-        return;
+    
+    const isAllDay = document.getElementById("allDayToggle").checked;
+    
+    let start, end;
+    if (isAllDay) {
+        start = date; // just the date string, no time
+        end = date;
+    } else {
+        start = `${date}T${startTime}`;
+        end = `${date}T${endTime}`;
+    }
+
+
+    // Set color dynamically based on event
+    let eventColor = 'violet';
+    if (appointment === 'Block Time Off') {
+        eventColor = 'lightgray';
+    }
+    else if (appointment === 'Service #1') {
+        eventColor = 'green';
+    }
+    else if (appointment === 'Service #2') {
+        eventColor = 'orange';
+    }
+    else if (appointment === 'Service #3') {
+        eventColor = 'blue';
     }
 
     if (selectedEvent) {
         // Edit an existing event
-        selectedEvent.setProp("title", title);
-        selectedEvent.setDates(start, end, { allDay: false });
+        // selectedEvent.setProp("title", title);
+        // selectedEvent.setExtendedProp("appointment", appointment);
+        selectedEvent.setProp("title", appointment); // setProp makes the title change correctly, however setExtendedProp causes the title to not change
+        selectedEvent.setDates(start, end, { allDay: isAllDay });
         selectedEvent.setExtendedProp("notes", notes);
+        selectedEvent.setProp("color", eventColor); // sets color while editing dynamically
     } else if (selectedTimeInfo) {
         // Create new event
         calendar.addEvent({
-            title: title,
+            // title: title,
+            title: appointment, // You need title to show something more than just the time
             start: start,
             end: end,
-            allDay: false,
+            allDay: isAllDay,
+            color: eventColor, // Color based on the event
             extendedProps: {
                 notes: notes
             }
@@ -131,7 +160,8 @@ function handleSaveClick() {
     selectedTimeInfo = null;
 
     // //clear model fields
-    document.getElementById("addTitle").value = "";
+    // document.getElementById("addTitle").value = "";
+    document.getElementById("appointmentType").value = "";
     document.getElementById("editStart").value = "";
     document.getElementById("editEnd").value = "";
     document.getElementById("notes").value = "";
@@ -160,7 +190,8 @@ function deleteAppointment() {
         if(selectedEvent) {
             selectedEvent.remove(); // Deletes event from calendar
             selectedEvent = null; // Reset selection
-            document.getElementById("addTitle").value = "";
+            // document.getElementById("addTitle").value = "";
+            document.getElementById("appointmentType").value = "";
             document.getElementById("editStart").value = "";
             document.getElementById("editEnd").value = "";
             document.getElementById("notes").value = "";

@@ -22,17 +22,22 @@
 
 /* What you see on the screen */
 .modal-content {
-    background-color: #000;
-    border: 2px solid orange;
+    background-color: white;
+    border: 1px solid black;
     text-align: center;
-    color: white;
+    color: black;
     z-index: 2;
     margin: 15% auto;
     padding: 20px;
     border-radius: 15px;
     width: 50%;
-    max-width: 400px;
+    max-width: 500px;
     margin: 4% auto 0 auto;
+}
+
+#appointmentType {
+    padding: 5px;
+    width: 50%;
 }
 
 /* The 'x' to close the modal */
@@ -44,12 +49,18 @@
     cursor: pointer;
 }
 
-#addTitle {
+#appointmentType {
     text-align: center;
     padding: 12px;
     margin: 10px 5px 10px 5px;
     width: 90%;
 }
+/* #addTitle {
+    text-align: center;
+    padding: 12px;
+    margin: 10px 5px 10px 5px;
+    width: 90%;
+} */
 #save {
     text-align: center;
     padding: 10px;

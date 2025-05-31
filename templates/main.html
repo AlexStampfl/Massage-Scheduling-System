@@ -17,9 +17,19 @@
         <div class="modal-content">
             <span class="close-btn">&times;</span> <!-- this is what makes the x to close the window happen -->
             <h1 id="modal_date">Today</h1>
-            <input type="text" id="addTitle" placeholder="Add title">
+            <!-- <input type="text" id="addTitle" placeholder="Add title"> -->
+            <select id="appointmentType">
+                <option></option>
+                <option id="block_time_off" class="block_time_off">Block Time Off</option>
+                <option id="service_one" class="service_one">Service #1</option>
+                <option id="service_two" class="service_two">Service #2</option>
+                <option id="service_three" class="service_three">Service #3</option>
+            </select>
             <br>
             <br>
+            <label>All Day</label>
+            <input type="checkbox" id="allDayToggle">
+            <br><br>
             <label>Start Time:</label><br>
             <input type="time" id="editStart"><br><br>
             <label>End Time:</label><br>
@@ -36,7 +46,8 @@
             <br><br>
             <label>Include buffer time after appointment?</label>
             <input type="checkbox">
-            <select>
+            <select disabled>
+                <option></option>
                 <option>15 Minutes</option>
                 <option>30 Minutes</option>
                 <option>60 Minutes</option>
