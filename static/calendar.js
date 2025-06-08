@@ -11,7 +11,7 @@ var calendar = new FullCalendar.Calendar(calendarEl, {
         selectedEvent = null; // Means we're adding a new one
         selectedTimeInfo = info;
 
-        // Shows the Date/Day you clicked on in the modal's header
+        // Shows the Date/Day you clicked on in the modal's header, without this, it just says 'Today' and you can only click once and nothing else will work
         let dateObj = selectedTimeInfo.start;
         let formattedDate = dateObj.toLocaleDateString(undefined, {
             weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
@@ -60,18 +60,8 @@ var calendar = new FullCalendar.Calendar(calendarEl, {
             }
         }
     },
-    events: [
-        {
-            // title: 'All Day Event',
-            // start: '2025-05-11'
-        },
-        {
-            // title: 'Quit Amazon',
-            // start: '2025-05-19T07:30:00',
-            // end: '2025-05-19T18:00:00'
-        }
 
-    ],
+    events: '/get-events', // Flask route returns JSON array of events
     editable: true, // determines if the events can be dragged and resized
     eventStartEditable: true,
     eventColor: 'violet',
@@ -82,13 +72,21 @@ calendar.render();
 let selectedEvent = null;
 let selectedTimeInfo = null;
 
-// Event listener for the Save Button in the modal
-function handleSaveClick() {
+
+// Event listener function for the Save Button in the modal
+async function handleSaveClick() {
     // const title = document.getElementById("addTitle").value;
     const appointment = document.getElementById("appointmentType").value; // drop down menu with options
     const startTime = document.getElementById("editStart").value;
     const endTime = document.getElementById("editEnd").value;
     const notes = document.getElementById("notes").value;
+    const clientId = document.getElementById("clientDropdown").value;
+
+    const clientDropdown = document.getElementById("clientDropdown");
+    const clientName = clientDropdown.options[clientDropdown.selectedIndex].text;
+
+    // Final title to display on calendar
+    const fullTitle = `${clientName} - ${appointment}`;
 
     // Extract date from `selectedTimeInfo`
     let date = null;
@@ -99,12 +97,14 @@ function handleSaveClick() {
     } else if (selectedEvent) {
         date = selectedEvent.startStr.split("T")[0];
     }
-
-    // const start = `${date}T${startTime}`;
-    // const end = `${date}T${endTime}`;
-
     
-    const isAllDay = document.getElementById("allDayToggle").checked;
+    // const isAllDay = document.getElementById("allDayToggle").checked;
+    let isAllDay = document.getElementById("allDayToggle").checked;
+
+    // If no times provided, default to all-day
+    if (!startTime && !endTime) {
+        isAllDay = true;
+    }
     
     let start, end;
     if (isAllDay) {
@@ -115,6 +115,10 @@ function handleSaveClick() {
         end = `${date}T${endTime}`;
     }
 
+    document.getElementById("allDayToggle").addEventListener("change", function() {
+        const timeInputs = [document.getElementById("editStart"), document.getElementById("editEnd")];
+        timeInputs.forEach(input => input.disabled = this.checked);
+    })
 
     // Set color dynamically based on event
     let eventColor = 'violet';
@@ -133,17 +137,15 @@ function handleSaveClick() {
 
     if (selectedEvent) {
         // Edit an existing event
-        // selectedEvent.setProp("title", title);
-        // selectedEvent.setExtendedProp("appointment", appointment);
-        selectedEvent.setProp("title", appointment); // setProp makes the title change correctly, however setExtendedProp causes the title to not change
+        // setProp makes the title change correctly, however setExtendedProp causes the title to not change
+        selectedEvent.setProp("title", `${clientName} - ${appointment}`);
         selectedEvent.setDates(start, end, { allDay: isAllDay });
         selectedEvent.setExtendedProp("notes", notes);
         selectedEvent.setProp("color", eventColor); // sets color while editing dynamically
     } else if (selectedTimeInfo) {
         // Create new event
         calendar.addEvent({
-            // title: title,
-            title: appointment, // You need title to show something more than just the time
+            title: `${clientDropdown.options[clientDropdown.selectedIndex].text} - ${appointment}`,
             start: start,
             end: end,
             allDay: isAllDay,
@@ -165,10 +167,56 @@ function handleSaveClick() {
     document.getElementById("editStart").value = "";
     document.getElementById("editEnd").value = "";
     document.getElementById("notes").value = "";
+
+
+    // Calendar appointment data persistence
+    // Store the appointments in the DB
+    // Send a POST request to your flask backend to save the event
+    await fetch('/add-event', { // await only works inside function marked as async
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            title: fullTitle,
+            start: start,
+            end: end,
+            allDay: isAllDay,
+            color: eventColor,
+            notes: notes,
+            client_id: clientId
+        })
+    }); 
 }
+
 
 // Function call
 document.getElementById("save").addEventListener("click", handleSaveClick);
+
+
+// Populate dropdown on modal open
+function populateClientDropdown() {
+    fetch('/get-clients')
+    .then(response => {
+        if(response.ok) { // Checks if HTTP response status in range of 200-299, indicating success
+            return response.json(); // Data is parsed as json
+        } else {
+            throw new Error("Something went wrong");
+        }
+        })
+    .then(data => {
+        const dropdown = document.getElementById("clientDropdown");
+        dropdown.innerHTML = '<option value="">-- Select a client --</option>';
+        data.forEach(client => {
+            const option = document.createElement("option");
+            option.value = client.id;
+            option.textContent = client.name;
+            dropdown.appendChild(option);
+        })
+    })
+    .catch(err => console.error("Error fetching clients:", err));
+}
+
 
 // Exit modal
 function myModal() {
@@ -188,17 +236,32 @@ function deleteAppointment() {
 
     deleteEvent.addEventListener('click', ()=> {
         if(selectedEvent) {
-            selectedEvent.remove(); // Deletes event from calendar
-            selectedEvent = null; // Reset selection
-            // document.getElementById("addTitle").value = "";
-            document.getElementById("appointmentType").value = "";
-            document.getElementById("editStart").value = "";
-            document.getElementById("editEnd").value = "";
-            document.getElementById("notes").value = "";
-            document.getElementById("modal").style.display = "none"; // close the modal
-        }
-    });
-}
+            const title = selectedEvent.title;
+            const start = selectedEvent.startStr;
 
+            // fetch to inform the backend of the deletion
+            fetch('delete-event', {
+                method: 'POST', 
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ title, start })
+                }).then(response => {
+                    if (response.ok) {
+                        selectedEvent.remove(); // only remove if backend confirms
+                        selectedEvent = null; // reset selection
+                        
+                        document.getElementById("appointmentType").value = "";
+                        document.getElementById("editStart").value = "";
+                        document.getElementById("editEnd").value = "";
+                        document.getElementById("notes").value = "";
+                        document.getElementById("modal").style.display = "none"; // close the modal
+                    } else {
+                        console.error("Failed to delete on server");
+                    }
+                }).catch(err => console.error("Delete error:", err));
+}});
+        }
 myModal();
+populateClientDropdown();
 deleteAppointment();

@@ -37,12 +37,13 @@
                 {% for client in clients %}
                 <tr>
                     <td><input type="checkbox"></td>
-                    <td>{{ client[2] if client[2] else "" }}</td>
-                    <td>{{ client[1] if client[1] else "" }}</td>
-                    <td>{{ client[3] if client[3] else "" }}</td>
-                    <td>{{ client[4] if client[4] else "" }}</td>
-                    <td>{{ client[6] if client[6] else "" }}</td>
-                    <td>Active</td>
+                    <td>{{ client[2] if client[2] else "" }}</td> <!-- Last name-->
+                    <td>{{ client[1] if client[1] else "" }}</td> <!-- First name-->
+                    <td>{{ client[3] if client[3] else "" }}</td> <!-- Phone -->
+                    <td>{{ client[4] if client[4] else "" }}</td> <!-- Email -->
+                    <td>{{ client[7] if client[7] else "" }}</td> <!-- notes -->
+                    <td>{{ client[5] if client[5] else "" }}</td> <!-- Status -->
+                    <!-- <td>Active</td> -->
                     <td class="menu_cell">
                         <div class="menu-container">
                             <img class="meatballs" src = "{{ url_for('static', filename='img/meatball_menu.png') }}" alt="3 dots">

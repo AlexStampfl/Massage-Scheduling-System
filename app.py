@@ -132,35 +132,149 @@ def delete_client(client_id):
     return jsonify({'status': 'deleted'}), 200
 
 
-
 # Temporary to ensure db allows notes
 @app.route('/upgrade-db')
 def upgrade_db():
     conn = sqlite3.connect(DB_PATH)
     c = conn.cursor()
     try:
+        c.execute('ALTER TABLE clients ADD COLUMN client_id INTEGER')
+    except sqlite3.OperationalError:
+        pass # Ignore if already exists
+
+    try:
         c.execute('ALTER TABLE clients ADD COLUMN notes TEXT')
+    except sqlite3.OperationalError:
+        pass # Ignore if already exists
+
+    conn.commit()
+    conn.close()
+    return "Database upgraded: client_id and notes columns ensured."
+
+
+# Save events to the databse - used to persist events (or edited ones) from calendar UI into backend
+@app.route('/add-event', methods=['POST'])
+def add_event():
+    data = request.get_json()
+    print("Received data:", data) # For debugging
+
+    try:
+        client_id = data.get('client_id') #safely access it
+        conn = sqlite3.connect(DB_PATH)
+        c = conn.cursor()
+        # This was a sticking point for me, I need to pay better attention to detail, I didn't have client_id below, and was missing a 7th ?
+        c.execute('''
+            INSERT INTO events (title, start, end, allDay, color, notes, client_id) 
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+        ''', (
+        data['title'],
+        data['start'],
+        data['end'],
+        int(data['allDay']),
+        data['color'],
+        data['notes'],
+        client_id
+        ))
         conn.commit()
-        return "Database upgraded successfully!"
-    except sqlite3.OperationalError as e:
-        return f"Upgrade failed: {e}"
-    finally:
         conn.close()
+        return jsonify({'status': 'success'})
+    except Exception as e:
+        print("Error saving event:", str(e))
+        return jsonify({'status': 'error', 'message': str(e)}), 500
 
 
-@app.route('/debug-columns')
-def debug_columns():
+
+# Used to fetch previously saved events, lets UI display previously saved events
+@app.route('/get-events')
+def get_events():
     conn = sqlite3.connect(DB_PATH)
     c = conn.cursor()
-    c.execute('PRAGMA table_info(clients)')
-    columns = c.fetchall()
+    c.execute('''
+              SELECT e.title, e.start, e.end, e.allDay, e.color, e.notes, e.client_id,
+              c.first_name, c.last_name
+        FROM events e
+        LEFT JOIN clients c ON e.client_id = c.id
+        ''')
+    rows = c.fetchall()
     conn.close()
-    return jsonify([col[1] for col in columns])  # col[1] is the column name
+
+    events = []
+    for row in rows:
+        appointment_type = row[0] or ""
+        start = row[1]
+        end = row[2]
+        all_day = bool(row[3])
+        color = row[4]
+        notes = row[5]
+        client_id = row[6]
+        first_name = row[7] or ""
+        last_name = row[8] or ""
+        client_name = f"{first_name} {last_name}".strip()
+
+        # Full title shown in calendar
+        full_title = f"{client_name} - {appointment_type}" if client_name else appointment_type
+
+
+        events.append({
+            'title': full_title,
+            'start': row[1],
+            'end': row[2],
+            'allDay': bool(row[3]),
+            'color': row[4],
+            'extendedProps': {
+                'notes': row[5],
+                'client_id': client_id,
+            }
+        })
+    return jsonify(events)
+
+def create_events_table():
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
+    c.execute('''
+        CREATE TABLE IF NOT EXISTS events (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            client_id INTEGER,
+            title TEXT,
+            start TEXT,
+            end TEXT,
+            allDay INTEGER,
+            color TEXT,
+            notes TEXT
+        )
+    ''')
+    conn.commit()
+    conn.close()
+
+# Delete appointment from client.db's event table
+@app.route('/delete-event', methods=['POST'])
+def delete_event():
+    data = request.json()
+    title = data.get('title')
+    start = data.get('start')
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
+    c.execute('DELETE FROM events WHERE title = ? and start = ?', (title, start))
+    conn.commit()
+    conn.close()
+    return jsonify({'status': 'deleted'})
+
+
+# Get client from DB for appointment
+@app.route('/get-clients')
+def get_clients():
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
+    c.execute('SELECT id, first_name, last_name FROM clients')
+    clients = [{'id': row[0], 'name':f"{row[1]} {row[2]}"} for row in c.fetchall()]
+    conn.close()
+    return jsonify(clients)
 
 
 
 # End of app
 if __name__ == '__main__':
+    create_events_table()
     init_db()
     app.run(debug=True) # Runs the app in debug mode
 
