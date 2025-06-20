@@ -257,6 +257,32 @@ def create_events_table():
     conn.commit()
     conn.close()
 
+
+# Update Event if moved
+@app.route('/update-event', methods=['POST'])
+def update_event():
+    data = request.get_json()
+    event_id = data.get('id')
+    start = data.get('start')
+    end = data.get('end')
+    all_day = int(data.get('allDay'))
+
+    try:
+        conn = sqlite3.connect(DB_PATH)
+        c = conn.cursor()
+        c.execute('''
+            UPDATE events
+            SET start = ?, end = ?, allDay = ?
+            WHERE id = ?
+        ''', (start, end, all_day, event_id))
+        conn.commit()
+        conn.close()
+        return jsonify({'status': 'updated'})
+    except Exception as e:
+        print("Error updating event:", str(e))
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+
+
 # Delete appointment from client.db's event table
 @app.route('/delete-event', methods=['POST'])
 def delete_event():

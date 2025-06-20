@@ -65,6 +65,32 @@ var calendar = new FullCalendar.Calendar(calendarEl, {
     editable: true, // determines if the events can be dragged and resized
     eventStartEditable: true,
     eventColor: 'violet',
+    eventDrop: function(info) { // Update appointment if dragged to new day/time
+        const updatedEvent = {
+            id: info.event.id,
+            start: info.event.start.toISOString(),
+            end: info.event.end ? info.event.end.toISOString(): null,
+            allDay: info.event.allDay
+        };
+
+        fetch('/update-event', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(updatedEvent)
+        })
+        .then(response => {
+            if (!response.ok) {
+                console.error("Failed to update event on the server");
+                info.revert(); // Revert the event position if update fails
+            }
+        })
+        .catch(err => {
+            console.error("Error during event update:", err);
+            info.revert();
+        });
+    }
 });
 
 calendar.render();
