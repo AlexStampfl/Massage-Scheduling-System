@@ -176,8 +176,12 @@ def add_event():
         client_id
         ))
         conn.commit()
+        event_id = c.lastrowid # get ID of the newly inserted row
         conn.close()
-        return jsonify({'status': 'success'})
+        return jsonify({'status': 'success', 'id': event_id})
+        # conn.commit()
+        # conn.close()
+        # return jsonify({'status': 'success'})
     except Exception as e:
         print("Error saving event:", str(e))
         return jsonify({'status': 'error', 'message': str(e)}), 500
@@ -190,7 +194,7 @@ def get_events():
     conn = sqlite3.connect(DB_PATH)
     c = conn.cursor()
     c.execute('''
-              SELECT e.title, e.start, e.end, e.allDay, e.color, e.notes, e.client_id,
+              SELECT e.id, e.title, e.start, e.end, e.allDay, e.color, e.notes, e.client_id,
               c.first_name, c.last_name
         FROM events e
         LEFT JOIN clients c ON e.client_id = c.id
@@ -200,32 +204,39 @@ def get_events():
 
     events = []
     for row in rows:
-        appointment_type = row[0] or ""
-        start = row[1]
-        end = row[2]
-        all_day = bool(row[3])
-        color = row[4]
-        notes = row[5]
-        client_id = row[6]
-        first_name = row[7] or ""
-        last_name = row[8] or ""
+        event_id = row[0] # just added at 7:18 on 6/20/25
+        appointment_type = row[1] or ""
+        start = row[2]
+        end = row[3]
+        all_day = bool(row[4])
+        color = row[5]
+        notes = row[6]
+        client_id = row[7]
+        first_name = row[8] or ""
+        last_name = row[9] or ""
         client_name = f"{first_name} {last_name}".strip()
 
         # Full title shown in calendar
         full_title = f"{client_name} - {appointment_type}" if client_name else appointment_type
 
 
+        # This was one of the biggest issues I had, and the solution was simple: make sure they columns and indexes match
         events.append({
+            # 'id': row[0], # This is 'title', not the real event.id
+            'id': event_id,
             'title': full_title,
-            'start': row[1],
-            'end': row[2],
-            'allDay': bool(row[3]),
-            'color': row[4],
-            'extendedProps': {
-                'notes': row[5],
-                'client_id': client_id,
-            }
+            # 'start': row[1],
+            'start': start,
+            # 'end': row[2],
+            'end': end,
+            # 'allDay': bool(row[3]),
+            'allDay': all_day,
+            # 'color': row[4],
+            'color': color,
+            'client_id': client_id,
+            'notes': notes,
         })
+    print("Events returned:", events) # Debug log
     return jsonify(events)
 
 def create_events_table():
@@ -249,15 +260,19 @@ def create_events_table():
 # Delete appointment from client.db's event table
 @app.route('/delete-event', methods=['POST'])
 def delete_event():
-    data = request.json()
-    title = data.get('title')
-    start = data.get('start')
-    conn = sqlite3.connect(DB_PATH)
-    c = conn.cursor()
-    c.execute('DELETE FROM events WHERE title = ? and start = ?', (title, start))
-    conn.commit()
-    conn.close()
-    return jsonify({'status': 'deleted'})
+    data = request.get_json()
+    event_id = data.get('id')
+
+    try:
+        conn = sqlite3.connect(DB_PATH)
+        c = conn.cursor()
+        c.execute('DELETE FROM events WHERE id = ?', (event_id,))
+        conn.commit()
+        conn.close()
+        return jsonify({'status': 'deleted'})
+    except Exception as e:
+        print("Error deleting event:", str(e))
+        return jsonify({'status': 'error', 'message': str(e)}), 500
 
 
 # Get client from DB for appointment

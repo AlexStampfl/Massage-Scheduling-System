@@ -143,17 +143,46 @@ async function handleSaveClick() {
         selectedEvent.setExtendedProp("notes", notes);
         selectedEvent.setProp("color", eventColor); // sets color while editing dynamically
     } else if (selectedTimeInfo) {
-        // Create new event
-        calendar.addEvent({
-            title: `${clientDropdown.options[clientDropdown.selectedIndex].text} - ${appointment}`,
-            start: start,
-            end: end,
-            allDay: isAllDay,
-            color: eventColor, // Color based on the event
-            extendedProps: {
-                notes: notes
+        try {
+            const response = await fetch('/add-event', { // await only works inside function marked as async
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    title: fullTitle,
+                    start: start,
+                    end: end,
+                    allDay: isAllDay,
+                    color: eventColor,
+                    notes: notes,
+                    client_id: clientId
+                })
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! Status: ${response.status}`);
             }
-        });
+            
+            const result = await response.json(); // gives real DB id
+
+            // Create new event
+            calendar.addEvent({
+                id: result.id, // persist backend id
+                title: fullTitle,
+                start: start,
+                end: end,
+                allDay: isAllDay,
+                color: eventColor, // Color based on the event
+                extendedProps: {
+                    notes: notes,
+                    client_id: clientId
+                }
+            });
+        } catch (error) {
+            console.error("Error saving event:", error);
+            alert("Failed to save the appointment. Please try again.");
+        }
     }
 
     // Reset and close the modal
@@ -162,31 +191,10 @@ async function handleSaveClick() {
     selectedTimeInfo = null;
 
     // //clear model fields
-    // document.getElementById("addTitle").value = "";
     document.getElementById("appointmentType").value = "";
     document.getElementById("editStart").value = "";
     document.getElementById("editEnd").value = "";
     document.getElementById("notes").value = "";
-
-
-    // Calendar appointment data persistence
-    // Store the appointments in the DB
-    // Send a POST request to your flask backend to save the event
-    await fetch('/add-event', { // await only works inside function marked as async
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-            title: fullTitle,
-            start: start,
-            end: end,
-            allDay: isAllDay,
-            color: eventColor,
-            notes: notes,
-            client_id: clientId
-        })
-    }); 
 }
 
 
@@ -236,8 +244,7 @@ function deleteAppointment() {
 
     deleteEvent.addEventListener('click', ()=> {
         if(selectedEvent) {
-            const title = selectedEvent.title;
-            const start = selectedEvent.startStr;
+            const id = selectedEvent.id;
 
             // fetch to inform the backend of the deletion
             fetch('delete-event', {
@@ -245,11 +252,11 @@ function deleteAppointment() {
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({ title, start })
+                body: JSON.stringify({ id })
                 }).then(response => {
                     if (response.ok) {
-                        selectedEvent.remove(); // only remove if backend confirms
-                        selectedEvent = null; // reset selection
+                        selectedEvent.remove(); // Remove from UI
+                        selectedEvent = null; // Reset selection
                         
                         document.getElementById("appointmentType").value = "";
                         document.getElementById("editStart").value = "";
@@ -257,11 +264,22 @@ function deleteAppointment() {
                         document.getElementById("notes").value = "";
                         document.getElementById("modal").style.display = "none"; // close the modal
                     } else {
-                        console.error("Failed to delete on server");
+                        return response.json().then(err => {
+                            console.error("Failed to delete on server");
+                            alert("Failed to delete appointment. Please try again.");
+                        });
                     }
-                }).catch(err => console.error("Delete error:", err));
-}});
+                }).catch(err => {
+                    console.error("Delete error:", err);
+                    alert("An error occurred while deleting the appointment.");
+                });
+        } else {
+            console.warn("No event selected for deletion");
+            alert("Please select an event to delete.");
         }
+    });
+}
+
 myModal();
 populateClientDropdown();
 deleteAppointment();
