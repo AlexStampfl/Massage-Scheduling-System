@@ -1,5 +1,32 @@
 // Initialize calendar
 var calendarEl = document.getElementById('calendar');
+
+async function updateEventTimeOnServer(event, revertFunc) {
+    const updatedData = {
+            // Grab the updated fields
+            id: event.id,
+            start: event.start.toISOString(),
+            end: event.end ? event.end.toISOString(): null,
+            allDay: event.allDay ?? false // ensures boolean, default to false
+        };
+
+        try {
+            const response = await fetch('/update-event', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(updatedData)
+            });
+
+            const result = await response.json();
+            if (!response.ok || result.status !== 'success') {
+                throw new Error(result.message || 'Update failed');
+            }
+        } catch (error) {
+            console.error("Update failed:", error);
+            revertFunc();
+        }
+}
+
 var calendar = new FullCalendar.Calendar(calendarEl, {
     initialView: 'dayGridMonth',
     selectable: true, // allows selecting date/time
@@ -65,34 +92,17 @@ var calendar = new FullCalendar.Calendar(calendarEl, {
     editable: true, // determines if the events can be dragged and resized
     eventStartEditable: true,
     eventColor: 'violet',
-    eventDrop: function(info) { // Update appointment if dragged to new day/time
-        const updatedEvent = {
-            id: info.event.id,
-            start: info.event.start.toISOString(),
-            end: info.event.end ? info.event.end.toISOString(): null,
-            allDay: info.event.allDay
-        };
-
-        fetch('/update-event', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(updatedEvent)
-        })
-        .then(response => {
-            if (!response.ok) {
-                console.error("Failed to update event on the server");
-                info.revert(); // Revert the event position if update fails
-            }
-        })
-        .catch(err => {
-            console.error("Error during event update:", err);
-            info.revert();
-        });
+    eventDrop: async function(info) {
+        await updateEventTimeOnServer(info.event, info.revert);
+        calendar.refetchEvents(); // Force UI to reflect backend changes
+    },
+    eventResize: async function(info) {
+       await updateEventTimeOnServer(info.event, info.revert);
+        calendar.refetchEvents(); // Force UI to reflect backend changes0
     }
-});
+    }
 
+)
 calendar.render();
 
 let selectedEvent = null;

@@ -265,7 +265,7 @@ def update_event():
     event_id = data.get('id')
     start = data.get('start')
     end = data.get('end')
-    all_day = int(data.get('allDay'))
+    all_day = int(bool(data.get('allDay', False))) # This ensures appointment can be dragged, update the DB and persist to the new location
 
     try:
         conn = sqlite3.connect(DB_PATH)
@@ -277,7 +277,7 @@ def update_event():
         ''', (start, end, all_day, event_id))
         conn.commit()
         conn.close()
-        return jsonify({'status': 'updated'})
+        return jsonify({'status': 'success'})
     except Exception as e:
         print("Error updating event:", str(e))
         return jsonify({'status': 'error', 'message': str(e)}), 500
