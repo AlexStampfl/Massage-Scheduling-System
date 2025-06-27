@@ -1,36 +1,42 @@
 // Initialize calendar
 var calendarEl = document.getElementById('calendar');
 
-async function updateEventTimeOnServer(event, revertFunc) {
+async function updateEventTimeOnServer(event, revertFunc) { // async functions always return a promise
     const updatedData = {
-            // Grab the updated fields
-            id: event.id,
-            start: event.start.toISOString(),
-            end: event.end ? event.end.toISOString(): null,
-            allDay: event.allDay ?? false // ensures boolean, default to false
-        };
+        // Grab the updated fields
+        id: event.id,
+        start: event.start.toISOString(),
+        end: event.end ? event.end.toISOString() : null,
+        allDay: event.allDay ?? false // ensures boolean, default to false
+    };
 
-        try {
-            const response = await fetch('/update-event', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(updatedData)
-            });
+    try {
+        const response = await fetch('/update-event', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(updatedData)
+        });
 
-            const result = await response.json();
-            if (!response.ok || result.status !== 'success') {
-                throw new Error(result.message || 'Update failed');
-            }
-        } catch (error) {
-            console.error("Update failed:", error);
-            revertFunc();
+        const result = await response.json();
+        if (!response.ok || result.status !== 'success') {
+            throw new Error(result.message || 'Update failed');
         }
+    } catch (error) {
+        console.error("Update failed:", error);
+        revertFunc();
+    }
 }
 
+// Calendar setup
 var calendar = new FullCalendar.Calendar(calendarEl, {
     initialView: 'dayGridMonth',
     selectable: true, // allows selecting date/time
+    events: '/get-events', // Flask route returns JSON array of events
+    editable: true, // determines if the events can be dragged and resized
+    eventStartEditable: true,
+    eventColor: 'violet',
 
+    // Handle Appointment Modal
     select: function (info) {
         const modal = document.getElementById("modal");
         modal.style.display = "block";
@@ -55,55 +61,57 @@ var calendar = new FullCalendar.Calendar(calendarEl, {
         const modal = document.getElementById("modal");
         modal.style.display = "block";
 
-    //clear model fields
-    // document.getElementById("addTitle").value = "";
-    document.getElementById("appointmentType").value = "";
-    document.getElementById("editStart").value = "";
-    document.getElementById("editEnd").value = "";
-    document.getElementById("notes").value = "";
+        //clear model fields
+        document.getElementById("appointmentType").value = "";
+        document.getElementById("editStart").value = "";
+        document.getElementById("editEnd").value = "";
+        document.getElementById("notes").value = "";
 
         selectedEvent = info.event;
         selectedTimeInfo = null;
 
         // Pre-fill modal fields
-        // document.getElementById("addTitle").value = info.event.title;
         document.getElementById("appointmentType").value = info.event.appointment;
         document.getElementById("editStart").value = info.event.startStr.slice(0, 16); // startStr is a property of the time, includes time, date and time zone
         document.getElementById("editEnd").value = info.event.endStr ? info.event.endStr.slice(0, 16) : ""; // endStr is a property of the time, both are used for the time format
         document.getElementById("notes").value = info.event.extendedProps?.notes || "";
     },
 
-    // Calendar header options
+    // Calendar header options - header toolbar
     headerToolbar: {
         left: 'prev,next today clients',
         center: 'title',
-        right: 'dayGridMonth,timeGridWeek,timeGridDay'
+        right: 'settings dayGridMonth,timeGridWeek,timeGridDay'
     },
+    // Custom buttons
     customButtons: {
         clients: {
             text: 'clients',
             click: function() {
                 window.location.href = "/client_list";
             }
+        },
+        settings: {
+            text: '',
+            click: function() {
+                window.location.href = "/settings"; // Link to settings page
+            }
         }
     },
-
-    events: '/get-events', // Flask route returns JSON array of events
-    editable: true, // determines if the events can be dragged and resized
-    eventStartEditable: true,
-    eventColor: 'violet',
-    eventDrop: async function(info) {
+    eventDrop: async function (info) {
         await updateEventTimeOnServer(info.event, info.revert);
         calendar.refetchEvents(); // Force UI to reflect backend changes
     },
-    eventResize: async function(info) {
-       await updateEventTimeOnServer(info.event, info.revert);
-        calendar.refetchEvents(); // Force UI to reflect backend changes0
+    eventResize: async function (info) {
+        await updateEventTimeOnServer(info.event, info.revert);
+        calendar.refetchEvents(); // Force UI to reflect backend changes
     }
-    }
+}
 
 )
 calendar.render();
+
+document.querySelector('.fc-settings-button').innerHTML = '<img src="/static/img/gear.png" style="height: 16px; vertical-align: middle;" alt="settings">'
 
 let selectedEvent = null;
 let selectedTimeInfo = null;
@@ -111,7 +119,6 @@ let selectedTimeInfo = null;
 
 // Event listener function for the Save Button in the modal
 async function handleSaveClick() {
-    // const title = document.getElementById("addTitle").value;
     const appointment = document.getElementById("appointmentType").value; // drop down menu with options
     const startTime = document.getElementById("editStart").value;
     const endTime = document.getElementById("editEnd").value;
@@ -133,15 +140,14 @@ async function handleSaveClick() {
     } else if (selectedEvent) {
         date = selectedEvent.startStr.split("T")[0];
     }
-    
-    // const isAllDay = document.getElementById("allDayToggle").checked;
+
     let isAllDay = document.getElementById("allDayToggle").checked;
 
     // If no times provided, default to all-day
     if (!startTime && !endTime) {
         isAllDay = true;
     }
-    
+
     let start, end;
     if (isAllDay) {
         start = date; // just the date string, no time
@@ -151,7 +157,7 @@ async function handleSaveClick() {
         end = `${date}T${endTime}`;
     }
 
-    document.getElementById("allDayToggle").addEventListener("change", function() {
+    document.getElementById("allDayToggle").addEventListener("change", function () {
         const timeInputs = [document.getElementById("editStart"), document.getElementById("editEnd")];
         timeInputs.forEach(input => input.disabled = this.checked);
     })
@@ -199,7 +205,7 @@ async function handleSaveClick() {
             if (!response.ok) {
                 throw new Error(`HTTP error! Status: ${response.status}`);
             }
-            
+
             const result = await response.json(); // gives real DB id
 
             // Create new event
@@ -241,24 +247,24 @@ document.getElementById("save").addEventListener("click", handleSaveClick);
 // Populate dropdown on modal open
 function populateClientDropdown() {
     fetch('/get-clients')
-    .then(response => {
-        if(response.ok) { // Checks if HTTP response status in range of 200-299, indicating success
-            return response.json(); // Data is parsed as json
-        } else {
-            throw new Error("Something went wrong");
-        }
+        .then(response => {
+            if (response.ok) { // Checks if HTTP response status in range of 200-299, indicating success
+                return response.json(); // Data is parsed as json
+            } else {
+                throw new Error("Something went wrong");
+            }
         })
-    .then(data => {
-        const dropdown = document.getElementById("clientDropdown");
-        dropdown.innerHTML = '<option value="">-- Select a client --</option>';
-        data.forEach(client => {
-            const option = document.createElement("option");
-            option.value = client.id;
-            option.textContent = client.name;
-            dropdown.appendChild(option);
+        .then(data => {
+            const dropdown = document.getElementById("clientDropdown");
+            dropdown.innerHTML = '<option value="">-- Select a client --</option>';
+            data.forEach(client => {
+                const option = document.createElement("option");
+                option.value = client.id;
+                option.textContent = client.name;
+                dropdown.appendChild(option);
+            })
         })
-    })
-    .catch(err => console.error("Error fetching clients:", err));
+        .catch(err => console.error("Error fetching clients:", err));
 }
 
 
@@ -278,37 +284,37 @@ function myModal() {
 function deleteAppointment() {
     const deleteEvent = document.getElementById("delete_event");
 
-    deleteEvent.addEventListener('click', ()=> {
-        if(selectedEvent) {
+    deleteEvent.addEventListener('click', () => {
+        if (selectedEvent) {
             const id = selectedEvent.id;
 
             // fetch to inform the backend of the deletion
             fetch('delete-event', {
-                method: 'POST', 
+                method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({ id })
-                }).then(response => {
-                    if (response.ok) {
-                        selectedEvent.remove(); // Remove from UI
-                        selectedEvent = null; // Reset selection
-                        
-                        document.getElementById("appointmentType").value = "";
-                        document.getElementById("editStart").value = "";
-                        document.getElementById("editEnd").value = "";
-                        document.getElementById("notes").value = "";
-                        document.getElementById("modal").style.display = "none"; // close the modal
-                    } else {
-                        return response.json().then(err => {
-                            console.error("Failed to delete on server");
-                            alert("Failed to delete appointment. Please try again.");
-                        });
-                    }
-                }).catch(err => {
-                    console.error("Delete error:", err);
-                    alert("An error occurred while deleting the appointment.");
-                });
+            }).then(response => {
+                if (response.ok) {
+                    selectedEvent.remove(); // Remove from UI
+                    selectedEvent = null; // Reset selection
+
+                    document.getElementById("appointmentType").value = "";
+                    document.getElementById("editStart").value = "";
+                    document.getElementById("editEnd").value = "";
+                    document.getElementById("notes").value = "";
+                    document.getElementById("modal").style.display = "none"; // close the modal
+                } else {
+                    return response.json().then(err => {
+                        console.error("Failed to delete on server");
+                        alert("Failed to delete appointment. Please try again.");
+                    });
+                }
+            }).catch(err => {
+                console.error("Delete error:", err);
+                alert("An error occurred while deleting the appointment.");
+            });
         } else {
             console.warn("No event selected for deletion");
             alert("Please select an event to delete.");

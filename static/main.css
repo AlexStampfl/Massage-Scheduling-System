@@ -48,6 +48,13 @@
     font-weight: bold;
     cursor: pointer;
 }
+.exit_settings {
+    color: #aaa;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+}
 
 #appointmentType {
     text-align: center;
@@ -55,12 +62,6 @@
     margin: 10px 5px 10px 5px;
     width: 90%;
 }
-/* #addTitle {
-    text-align: center;
-    padding: 12px;
-    margin: 10px 5px 10px 5px;
-    width: 90%;
-} */
 #save {
     text-align: center;
     padding: 10px;
@@ -261,4 +262,32 @@ table th {
 #modal #notes {
     text-align: left;
     vertical-align: top;
+}
+
+/* Settings page */
+#settings {
+    text-align: left;
+    max-width: 65%;
+    top: 10%;
+    left: 50%;
+    border: 1px solid saddlebrown;
+    height: 100%;
+    margin: 0 auto;
+    padding: 15px;
+}
+
+form label {
+  font-weight: bold;
+}
+form input {
+  margin-bottom: 10px;
+  padding: 5px;
+  width: 200px;
+}
+form button {
+  padding: 6px 12px;
+  background-color: #4a90e2;
+  color: white;
+  border: none;
+  border-radius: 4px;
 }

@@ -312,6 +312,12 @@ def get_clients():
     return jsonify(clients)
 
 
+# Settings page
+@app.route('/settings')
+def settings():
+    return render_template('settings.html')
+
+
 
 # End of app
 if __name__ == '__main__':

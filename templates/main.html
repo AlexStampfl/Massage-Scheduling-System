@@ -8,7 +8,7 @@
     <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.17/index.global.min.js'></script>
     <script src="https://cdn.jsdelivr.net/npm/@fullcalendar/interaction@6.1.8/index.global.min.js"></script>
     
-     <link rel="stylesheet" href="{{ url_for('static', filename = 'main.css')}}">
+    <link rel="stylesheet" href="{{ url_for('static', filename = 'main.css')}}">
     <title>Booking Calendar</title>
 </head>
 <body>
@@ -34,10 +34,6 @@
             <label>End Time:</label><br>
             <input type="time" id="editEnd">
             <br><br>
-            <!-- <button>
-                 <img id="add_client_icon" src="{{ url_for('static', filename='img/add_client_icon.png') }}" alt="Add person icon">
-                Add Guests
-            </button> -->
             <label for="clientDropdown">Select Client:</label>
             <select id="clientDropdown">
                 <option value="">-- Select a client --</option>
@@ -46,21 +42,6 @@
             <label>Add location</label>
             <br><br>
             <textarea id="notes" placeholder="Add notes" rows="5" cols="35"></textarea>
-            <br><br>
-            <label>Include buffer time after appointment?</label>
-            <input type="checkbox">
-            <select disabled>
-                <option></option>
-                <option>15 Minutes</option>
-                <option>30 Minutes</option>
-                <option>60 Minutes</option>
-            </select>
-            <br><br>
-            <label>Recurring Event?</label><br>
-            <label>yes</label>
-            <input type="radio" id="recurring" value="yes">
-            <label>no</label>
-            <input type="radio" id="recurring" value="no">
             <br><br>
             <span id="save-button"><button id="save">Save</button></span>
             <button id="delete_event">
