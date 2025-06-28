@@ -276,9 +276,6 @@ table th {
     padding: 15px;
 }
 
-form label {
-  font-weight: bold;
-}
 form input {
   margin-bottom: 10px;
   padding: 5px;
@@ -290,4 +287,16 @@ form button {
   color: white;
   border: none;
   border-radius: 4px;
+}
+
+.fc-event.buffer-time {
+    background-image: repeating-linear-gradient(
+        45deg,
+    rgba(64, 130, 168, 0.5),
+    rgba(117, 57, 109, 0.5) 5px,
+    rgba(255, 255, 255, 0.5) 5px,
+    rgba(143, 24, 127, 0.5) 10px
+    );
+    border: none;
+    pointer-events: none,
 }

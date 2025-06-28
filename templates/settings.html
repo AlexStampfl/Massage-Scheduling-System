@@ -16,16 +16,14 @@
             </div>
         <hr>
         <h2>Preferences</h2>
-        <br>
+        
         <h3>Buffer Times</h3>
         <form id="bufferForm">
-            <label for="buffer_before">Buffer Before Appointment</label><br>
-            <input type="number" id="buffer_before" name="buffer_before" min="0" step="5"><br><br>
+        
+            <label for="buffer_after">Buffer Time After Appointment (Minutes)</label><br>
+            <input type="number" id="buffer_time_after" name="buffer_after" min="0" step="5"><br><br>
 
-            <label for="buffer_after">Buffer After Appointment</label><br>
-            <input type="number" id="buffer_after" name="buffer_after" min="0" step="5"><br><br>
-
-            <button type="submit">Save Preferences</button>
+            <button type="submit" id="save_preferences">Save Preferences</button>
         </form>
     </div>
     <script src = "{{ url_for('static', filename = 'calendar.js') }}" defer></script>

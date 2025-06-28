@@ -31,18 +31,77 @@ async function updateEventTimeOnServer(event, revertFunc) { // async functions a
 var calendar = new FullCalendar.Calendar(calendarEl, {
     initialView: 'dayGridMonth',
     selectable: true, // allows selecting date/time
-    events: '/get-events', // Flask route returns JSON array of events
+    // events: '/get-events', // Flask route returns JSON array of events
+    events: async function(fetchInfo, successCallback, failureCallback) {
+        try {
+            // Fetch appointments
+            const [eventRes, settingRes] = await Promise.all([
+                fetch('/get-events'),
+                fetch('/get-settings')
+            ]);
+
+            const events = await eventRes.json();
+            const settings = await settingRes.json();
+            const buffer = parseInt(settings.buffer_time_after || 0);
+
+            const allEvents = [];
+            
+            events.forEach(event => {
+                // Push original event
+                allEvents.push(event);
+    
+                // If buffer_time_after is defined, create background event
+                if (buffer > 0 && event.end) {
+                    const endTime = new Date(event.end);
+                    const bufferEnd = new Date(endTime.getTime() + buffer * 60000);
+    
+                    allEvents.push({
+                        // start: event.end,
+                        start: endTime,
+                        end: bufferEnd,
+                        // end: bufferEnd.toISOString(),
+                        display: 'background',
+                        backgroundColor: '#8e44ad',
+                        // overlap: false,
+                        overlap: function(event) {
+                            return event.display !== 'background' // Blocks selecting over buffer areas
+                        },
+                        editable: false,
+                        selectable: false,
+                        className: 'buffer-time'
+                    });
+                }
+            });
+            
+            successCallback(allEvents);
+        } catch (err) {
+            failureCallback(err);
+        }
+    },
     editable: true, // determines if the events can be dragged and resized
     eventStartEditable: true,
     eventColor: 'violet',
 
-    // Handle Appointment Modal
+    // Logic for adding new appointment
     select: function (info) {
+
+        // Check if selected range overlaps any buffer time
+        const overlapping = calendar.getEvents().some(evt => {
+            return evt.display == 'background' &&
+                info.start < evt.end &&
+                info.end > evt.start;
+        });
+
+        if (overlapping) {
+            alert("Conflicting time, unable to book during buffer time");
+            return; // stop the modal from opening
+        }
+
         const modal = document.getElementById("modal");
         modal.style.display = "block";
 
         selectedEvent = null; // Means we're adding a new one
-        selectedTimeInfo = info;
+        selectedTimeInfo = info; // Capturing the click time
 
         // Shows the Date/Day you clicked on in the modal's header, without this, it just says 'Today' and you can only click once and nothing else will work
         let dateObj = selectedTimeInfo.start;
@@ -53,6 +112,22 @@ var calendar = new FullCalendar.Calendar(calendarEl, {
         let existingDate = document.getElementById("modal_date");
         if (existingDate) {
             existingDate.innerHTML = formattedDate;
+        }
+
+        // Autofill start time based on clicked slot, click a time to create appointment at that time, not a blank modal
+        if (selectedTimeInfo && selectedTimeInfo.start) {
+            const startInput = document.getElementById("editStart");
+            const endInput = document.getElementById("editEnd");
+
+            const start = new Date(selectedTimeInfo.start);
+            const end = new Date(start.getTime() + 60 * 60 * 1000); // Default duration: 1 hour
+
+            const formatTime = (date) => {
+                return date.toTimeString().slice(0, 5); // HH:mm
+            }
+
+            startInput.value = formatTime(start);
+            endInput.value = formatTime(end);
         }
     },
 
@@ -105,8 +180,9 @@ var calendar = new FullCalendar.Calendar(calendarEl, {
     eventResize: async function (info) {
         await updateEventTimeOnServer(info.event, info.revert);
         calendar.refetchEvents(); // Force UI to reflect backend changes
-    }
+    },
 }
+
 
 )
 calendar.render();
@@ -177,6 +253,7 @@ async function handleSaveClick() {
         eventColor = 'blue';
     }
 
+    // Handles form submission
     if (selectedEvent) {
         // Edit an existing event
         // setProp makes the title change correctly, however setExtendedProp causes the title to not change

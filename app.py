@@ -179,9 +179,6 @@ def add_event():
         event_id = c.lastrowid # get ID of the newly inserted row
         conn.close()
         return jsonify({'status': 'success', 'id': event_id})
-        # conn.commit()
-        # conn.close()
-        # return jsonify({'status': 'success'})
     except Exception as e:
         print("Error saving event:", str(e))
         return jsonify({'status': 'error', 'message': str(e)}), 500
@@ -258,6 +255,51 @@ def create_events_table():
     conn.close()
 
 
+# Create settings table
+def create_settings_table():
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS settings (
+            id INTEGER PRIMARY KEY,
+            buffer_time_after INTEGER DEFAULT 0
+        )    
+    ''')
+    # Insert row only if not exists
+    cursor.execute('SELECT COUNT(*) FROM settings WHERE id = 1')
+    if cursor.fetchone()[0] == 0:
+        cursor.execute('INSERT INTO settings (id, buffer_time_after) VALUES (?, ?)', (1, 0))
+    conn.commit()
+    conn.close()
+
+# Create flask route to fetch and update settings
+@app.route('/get-settings', methods=['GET'])
+def get_settings():
+    try:
+        conn = sqlite3.connect(DB_PATH)
+        cursor = conn.cursor()
+        cursor.execute('SELECT buffer_time_after FROM settings WHERE id = 1')
+        result = cursor.fetchone()
+        conn.close()
+        return jsonify({'buffer_time_after': result[0] if result else 0})
+    except Exception as e:
+        print("Error in /get-settings:", e)
+        return jsonify({'error':str(e)}), 500
+
+
+@app.route('/update-settings', methods=['POST'])
+def update_settings():
+    data = request.get_json()
+    buffer_time_after = data.get('buffer_time_after', 0)
+
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    cursor.execute('UPDATE settings SET buffer_time_after = ? WHERE id = 1', (buffer_time_after,))
+    conn.commit()
+    conn.close()
+    return jsonify({'success': True})
+
+
 # Update Event if moved
 @app.route('/update-event', methods=['POST'])
 def update_event():
@@ -322,6 +364,7 @@ def settings():
 # End of app
 if __name__ == '__main__':
     create_events_table()
+    create_settings_table()
     init_db()
     app.run(debug=True) # Runs the app in debug mode
 
