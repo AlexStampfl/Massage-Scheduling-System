@@ -2,15 +2,38 @@
 # python app.py
 
 from flask import Flask, jsonify, render_template, request, redirect, url_for
+from flask_mail import Mail, Message
+from dotenv import load_dotenv
 import sqlite3
 import os
 
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DB_PATH = os.path.join(BASE_DIR, "client.db")
+load_dotenv()
 
 # Initialize Flask
 app = Flask(__name__) # Flask constructor, creates the Flask app
+
+# Mail config
+app.config['MAIL_SERVER'] = 'smtp.gmail.com'
+app.config['MAIL_PORT'] = 587
+app.config['MAIL_USE_TLS'] = True
+app.config['MAIL_USERNAME'] = os.getenv('EMAIL_USER')
+app.config['MAIL_PASSWORD'] = os.getenv('EMAIL_PASS')
+app.config['MAIL_DEFAULT_SENDER'] = os.getenv('EMAIL_USER')
+
+mail = Mail(app)
+
+def send_appointment_email(recipient_email, subject, body):
+    try:
+        msg = Message(subject, recipients=[recipient_email])
+        msg.body = body
+        mail.send(msg)
+        print(f"Email sent to {recipient_email}")
+    except Exception as e:
+        print(f"Failed to send email: {e}")
+
 
 
 def init_db():
@@ -40,6 +63,10 @@ def index(): # Creates a function bound with '/' route
     clients = c.fetchall()
     conn.close()
     return render_template('main.html', calendar=calendar)
+
+
+
+
 
 
 # POST - Route URL for add-client page
@@ -156,6 +183,7 @@ def upgrade_db():
 @app.route('/add-event', methods=['POST'])
 def add_event():
     data = request.get_json()
+
     recurrence = data.get('recurrence', 'none')
     print("Received data:", data) # For debugging
 
@@ -180,10 +208,24 @@ def add_event():
         conn.commit()
         event_id = c.lastrowid # get ID of the newly inserted row
         conn.close()
+        
+        # Email logic
+        from datetime import datetime
+        start_dt = datetime.fromisoformat(data['start'])
+        date = start_dt.strftime("%A, %B, %d, %Y")
+        time = start_dt.strftime("%I:%M %p")
+        body = f"Hi! Your appointment is confirmed for {date} at {time}."
+        subject = 'Appointment Confirmation'
+        recipient = 'client@example.com'
+
+        send_appointment_email(recipient, subject, body)
+        
         return jsonify({'status': 'success', 'id': event_id})
+    
     except Exception as e:
         print("Error saving event:", str(e))
         return jsonify({'status': 'error', 'message': str(e)}), 500
+
 
 
 
