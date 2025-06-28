@@ -152,10 +152,11 @@ def upgrade_db():
     return "Database upgraded: client_id and notes columns ensured."
 
 
-# Save events to the databse - used to persist events (or edited ones) from calendar UI into backend
+# Save events to the database - used to persist events (or edited ones) from calendar UI into backend
 @app.route('/add-event', methods=['POST'])
 def add_event():
     data = request.get_json()
+    recurrence = data.get('recurrence', 'none')
     print("Received data:", data) # For debugging
 
     try:
@@ -164,8 +165,8 @@ def add_event():
         c = conn.cursor()
         # This was a sticking point for me, I need to pay better attention to detail, I didn't have client_id below, and was missing a 7th ?
         c.execute('''
-            INSERT INTO events (title, start, end, allDay, color, notes, client_id) 
-            VALUES (?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO events (title, start, end, allDay, color, notes, client_id, recurrence) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
         ''', (
         data['title'],
         data['start'],
@@ -173,7 +174,8 @@ def add_event():
         int(data['allDay']),
         data['color'],
         data['notes'],
-        client_id
+        client_id,
+        recurrence
         ))
         conn.commit()
         event_id = c.lastrowid # get ID of the newly inserted row
@@ -191,7 +193,7 @@ def get_events():
     conn = sqlite3.connect(DB_PATH)
     c = conn.cursor()
     c.execute('''
-              SELECT e.id, e.title, e.start, e.end, e.allDay, e.color, e.notes, e.client_id,
+              SELECT e.id, e.title, e.start, e.end, e.allDay, e.color, e.notes, e.client_id, e.recurrence,
               c.first_name, c.last_name
         FROM events e
         LEFT JOIN clients c ON e.client_id = c.id
@@ -209,29 +211,26 @@ def get_events():
         color = row[5]
         notes = row[6]
         client_id = row[7]
-        first_name = row[8] or ""
-        last_name = row[9] or ""
+        recurrence = row[8] or "none"
+        first_name = row[9] or ""
+        last_name = row[10] or ""
         client_name = f"{first_name} {last_name}".strip()
 
         # Full title shown in calendar
         full_title = f"{client_name} - {appointment_type}" if client_name else appointment_type
 
 
-        # This was one of the biggest issues I had, and the solution was simple: make sure they columns and indexes match
+        # This was one of the biggest issues I had, and the solution was simple: make sure the columns and indexes match
         events.append({
-            # 'id': row[0], # This is 'title', not the real event.id
             'id': event_id,
             'title': full_title,
-            # 'start': row[1],
             'start': start,
-            # 'end': row[2],
             'end': end,
-            # 'allDay': bool(row[3]),
             'allDay': all_day,
-            # 'color': row[4],
             'color': color,
             'client_id': client_id,
             'notes': notes,
+            'recurrence': recurrence
         })
     print("Events returned:", events) # Debug log
     return jsonify(events)

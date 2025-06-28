@@ -47,37 +47,73 @@ var calendar = new FullCalendar.Calendar(calendarEl, {
             const allEvents = [];
 
             events.forEach(event => {
-                // Push original event
-                allEvents.push(event);
+                // calendar.addEvent(event);
 
-                // If buffer_time_after is defined, create background event
-                if (buffer > 0 && event.end) {
-                    const endTime = new Date(event.end);
+                // Only add event if it has a valid start and end time
+                if (!event.start || !event.end) {
+                    console.warn("Skipping event with invalid time:", event);
+                    return;
+                }
+
+                allEvents.push(event); // Add the base event
+
+                // Handle recurring events
+                if (event.recurrence && event.recurrence !== 'none') {
+                    const recurrenceCount = 5;
+
+                    for (let i = 1; i <= recurrenceCount; i++) {
+                        const start = new Date(event.start);
+                        const end = new Date(event.end);
+
+                        if (event.recurrence === 'daily') {
+                            start.setDate(start.getDate() + i);
+                            end.setDate(end.getDate() + i);
+                        } else if (event.recurrence === 'weekly') {
+                            start.setDate(start.getDate() + 7 * i);
+                            end.setDate(end.getDate() + 7 * i);
+                        }
+
+                        // calendar.addEvent({
+                        allEvents.push({
+                            ...event,
+                            start: start.toISOString(),
+                            end: end.toISOString(),
+                            id: `${event.id}_recurring_${i}` // Make sure ID is unique
+                        });
+                    }
+                }
+
+                // Add buffer if needed
+                const endTime = new Date(event.end);
+                if (buffer > 0 && !isNaN(endTime.getTime())) {
                     const bufferEnd = new Date(endTime.getTime() + buffer * 60000);
 
                     allEvents.push({
                         // start: event.end,
-                        start: endTime,
-                        end: bufferEnd,
+                        // start: endTime,
+                        start: endTime.toISOString(),
+                        // end: bufferEnd,
+                        end: bufferEnd.toISOString(),
                         // end: bufferEnd.toISOString(),
                         display: 'background',
                         backgroundColor: '#8e44ad',
                         // overlap: false,
-                        overlap: function (event) {
-                            return event.display !== 'background' // Blocks selecting over buffer areas
-                        },
+                        // overlap: function (event) {
+                        //     return event.display !== 'background' // Blocks selecting over buffer areas
+                        // },
+                        overlap: (e) => e.display !== 'background',
                         editable: false,
                         selectable: false,
                         className: 'buffer-time'
                     });
                 }
             });
-
             successCallback(allEvents);
         } catch (err) {
             failureCallback(err);
         }
     },
+
     editable: true, // determines if the events can be dragged and resized
     eventStartEditable: true,
     eventColor: 'violet',
@@ -150,6 +186,7 @@ var calendar = new FullCalendar.Calendar(calendarEl, {
         document.getElementById("editStart").value = info.event.startStr.slice(0, 16); // startStr is a property of the time, includes time, date and time zone
         document.getElementById("editEnd").value = info.event.endStr ? info.event.endStr.slice(0, 16) : ""; // endStr is a property of the time, both are used for the time format
         document.getElementById("notes").value = info.event.extendedProps?.notes || "";
+        document.getElementById("recurrence").value = info.event.extendedProps?.recurrence || 'none';
     },
 
     // Calendar header options - header toolbar
@@ -200,9 +237,10 @@ async function handleSaveClick() {
     const endTime = document.getElementById("editEnd").value;
     const notes = document.getElementById("notes").value;
     const clientId = document.getElementById("clientDropdown").value;
-
+    
     const clientDropdown = document.getElementById("clientDropdown");
     const clientName = clientDropdown.options[clientDropdown.selectedIndex].text;
+    const recurrence = document.getElementById("recurrence").value;
 
     // Final title to display on calendar
     const fullTitle = `${clientName} - ${appointment}`;
@@ -253,6 +291,8 @@ async function handleSaveClick() {
         eventColor = 'blue';
     }
 
+
+
     // Handles form submission
     if (selectedEvent) {
         // Edit an existing event
@@ -275,7 +315,8 @@ async function handleSaveClick() {
                     allDay: isAllDay,
                     color: eventColor,
                     notes: notes,
-                    client_id: clientId
+                    client_id: clientId,
+                    recurrence: recurrence
                 })
             });
 
