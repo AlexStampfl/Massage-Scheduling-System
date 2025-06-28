@@ -32,7 +32,7 @@ var calendar = new FullCalendar.Calendar(calendarEl, {
     initialView: 'dayGridMonth',
     selectable: true, // allows selecting date/time
     // events: '/get-events', // Flask route returns JSON array of events
-    events: async function(fetchInfo, successCallback, failureCallback) {
+    events: async function (fetchInfo, successCallback, failureCallback) {
         try {
             // Fetch appointments
             const [eventRes, settingRes] = await Promise.all([
@@ -45,16 +45,16 @@ var calendar = new FullCalendar.Calendar(calendarEl, {
             const buffer = parseInt(settings.buffer_time_after || 0);
 
             const allEvents = [];
-            
+
             events.forEach(event => {
                 // Push original event
                 allEvents.push(event);
-    
+
                 // If buffer_time_after is defined, create background event
                 if (buffer > 0 && event.end) {
                     const endTime = new Date(event.end);
                     const bufferEnd = new Date(endTime.getTime() + buffer * 60000);
-    
+
                     allEvents.push({
                         // start: event.end,
                         start: endTime,
@@ -63,7 +63,7 @@ var calendar = new FullCalendar.Calendar(calendarEl, {
                         display: 'background',
                         backgroundColor: '#8e44ad',
                         // overlap: false,
-                        overlap: function(event) {
+                        overlap: function (event) {
                             return event.display !== 'background' // Blocks selecting over buffer areas
                         },
                         editable: false,
@@ -72,7 +72,7 @@ var calendar = new FullCalendar.Calendar(calendarEl, {
                     });
                 }
             });
-            
+
             successCallback(allEvents);
         } catch (err) {
             failureCallback(err);
@@ -162,13 +162,13 @@ var calendar = new FullCalendar.Calendar(calendarEl, {
     customButtons: {
         clients: {
             text: 'clients',
-            click: function() {
+            click: function () {
                 window.location.href = "/client_list";
             }
         },
         settings: {
             text: '',
-            click: function() {
+            click: function () {
                 window.location.href = "/settings"; // Link to settings page
             }
         }
@@ -297,6 +297,18 @@ async function handleSaveClick() {
                     notes: notes,
                     client_id: clientId
                 }
+            });
+
+            // Add 30-minute buffer after the event
+            const bufferStart = new Date(end);
+            const bufferEnd = new Date(bufferStart.getTime() + 30 * 60 * 1000) // 30 min buffer
+
+            calendar.addEvent({
+                title: 'Buffer',
+                start: bufferStart.toISOString(),
+                end: bufferEnd.toISOString(),
+                display: 'background',
+                color: 'gray'
             });
         } catch (error) {
             console.error("Error saving event:", error);
