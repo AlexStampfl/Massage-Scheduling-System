@@ -183,9 +183,9 @@ def upgrade_db():
 @app.route('/add-event', methods=['POST'])
 def add_event():
     data = request.get_json()
+    print("Incoming data:", data) # For debugging
 
     recurrence = data.get('recurrence', 'none')
-    print("Received data:", data) # For debugging
 
     try:
         client_id = data.get('client_id') #safely access it
@@ -244,6 +244,7 @@ def get_events():
     conn.close()
 
     events = []
+    # print(row)
     for row in rows:
         event_id = row[0] # just added at 7:18 on 6/20/25
         appointment_type = row[1] or ""
@@ -259,7 +260,15 @@ def get_events():
         client_name = f"{first_name} {last_name}".strip()
 
         # Full title shown in calendar
-        full_title = f"{client_name} - {appointment_type}" if client_name else appointment_type
+        # full_title = f"{client_name} - {appointment_type}" if client_name else appointment_type
+        if client_name and appointment_type:
+            full_title = f"{client_name} - {appointment_type}"
+        elif appointment_type: # fallback if appiontment_type exists but no client
+            full_title = appointment_type
+        elif notes: # use notes if no client or appointment type
+            full_title = notes
+        else:
+            full_title = "Blocked Time"
 
 
         # This was one of the biggest issues I had, and the solution was simple: make sure the columns and indexes match

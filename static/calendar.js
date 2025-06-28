@@ -243,7 +243,16 @@ async function handleSaveClick() {
     const recurrence = document.getElementById("recurrence").value;
 
     // Final title to display on calendar
-    const fullTitle = `${clientName} - ${appointment}`;
+    // const fullTitle = `${clientName} - ${appointment}`;
+
+    let fullTitle;
+
+    if (appointment === 'Block Time Off' && notes.trim()) {
+        fullTitle = notes.trim() || "Blocked Time"; // use notes as title
+    } else {
+        fullTitle = `${clientName} - ${appointment}`;
+    }
+
 
     // Extract date from `selectedTimeInfo`
     let date = null;
