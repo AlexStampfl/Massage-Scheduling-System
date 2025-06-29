@@ -165,6 +165,8 @@ var calendar = new FullCalendar.Calendar(calendarEl, {
             startInput.value = formatTime(start);
             endInput.value = formatTime(end);
         }
+
+        populateServicesDropdown();
     },
 
     // the click event for the modal
@@ -404,6 +406,20 @@ function populateClientDropdown() {
             })
         })
         .catch(err => console.error("Error fetching clients:", err));
+}
+
+async function populateServicesDropdown() {
+    const res = await fetch('/get-services');
+    const services = await res.json();
+    const dropdown = document.getElementById("appointmentType");
+
+    dropdown.innerHTML = '<option value="">-- Select a service --</option>';
+    services.forEach(service => {
+        const option = document.createElement("option");
+        option.value = service.name;
+        option.textContent = service.name;
+        dropdown.appendChild(option);
+    })
 }
 
 

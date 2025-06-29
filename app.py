@@ -410,6 +410,39 @@ def settings():
     return render_template('settings.html')
 
 
+@app.route('/add-service', methods=['POST'])
+def add_service():
+    name = request.json.get('name')
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
+    c.execute("INSERT INTO services (name) VALUES (?)", (name,))
+    conn.commit()
+    conn.close()
+    return jsonify({'status':'success'})
+
+@app.route('/get-services')
+def get_services():
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
+    c.execute("SELECT id, name FROM services")
+    services = [{'id': row[0], 'name': row[1]} for row in c.fetchall()]
+    conn.close()
+    return jsonify(services)
+
+@app.route('/delete-service', methods=['POST'])
+def delete_service():
+    service_id = request.json.get('id')
+    try:
+        conn = sqlite3.connect(DB_PATH)
+        c = conn.cursor()
+        c.execute("DELETE FROM services WHERE id = ?", (service_id,))
+        conn.commit()
+        conn.close()
+        return jsonify({'status':'success'})
+    except Exception as e:
+        return jsonify({'status':'error', 'message':str(e)}), 500
+
+
 
 # End of app
 if __name__ == '__main__':

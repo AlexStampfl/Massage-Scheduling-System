@@ -300,3 +300,20 @@ form button {
     border: none;
     pointer-events: none,
 }
+
+#serviceList {
+  list-style: none;
+  padding-left: 0;
+}
+
+#serviceList li {
+  margin-bottom: 6px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  max-width: 300px;
+}
+
+#serviceList button.delete-service {
+  margin-left: 10px;
+}

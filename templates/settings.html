@@ -21,10 +21,20 @@
         <form id="bufferForm">
         
             <label for="buffer_after">Buffer Time After Appointment (Minutes)</label><br>
-            <input type="number" id="buffer_time_after" name="buffer_after" min="0" step="5"><br><br>
+            <input type="number" id="buffer_time_after" name="buffer_after" min="0" step="5"><br>
 
             <button type="submit" id="save_preferences">Save Preferences</button>
+            <br><br>
         </form>
+        <h3>Add Services</h3>
+        <form id="addServiceForm">
+            <!-- <label>Add Services</label><br> -->
+
+            <input type="text" id="newServiceName" placeholder="Service name" required>
+            <br>
+            <button type="submit">Add Service</button>
+        </form>
+        <ul id="serviceList"></ul>
     </div>
     <script src = "{{ url_for('static', filename = 'calendar.js') }}" defer></script>
     <script src = "{{ url_for('static', filename = 'settings.js') }}" defer></script>

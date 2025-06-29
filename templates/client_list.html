@@ -70,19 +70,19 @@
                 <input type="hidden" id="editClientId">
                 <label class="client_info">Last Name</label>
                 <br>
-                <input type="text" name="lastname" placeholder="Last Name">
+                <input type="text" name="lastname" pattern="[A-Za-z\s\-]+" title="Only letters, spaces and hyphens allowed" placeholder="Last Name" required>
                 <br><br>
                 <label class="client_info">First Name</label>
                 <br>
-                <input type="text" name="firstname" placeholder="First Name">
+                <input type="text" name="firstname" pattern="[A-Za-z\s\-]+" title="Only letters, spaces and hyphens allowed" placeholder="First Name" required>
                 <br><br>
                 <label class="client_info">Phone Number</label>
                 <br>
-                <input type="phone" name="phone" placeholder="(###) ###-####">
+                <input type="tel" name="phone" placeholder="##########" pattern="\d{10,15}" title="Digits only " required>
                 <br><br>
                 <label class="client_info">Email</label>
                 <br>
-                <input type="email" name="email" placeholder="Email">
+                <input type="email" name="email" placeholder="Email" required>
                 <br>
                 <br><br>
                 <br>
