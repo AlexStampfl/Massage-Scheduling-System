@@ -213,7 +213,6 @@ def add_event():
         data['start'],
         data['end'],
         int(data['allDay']),
-        # data['color'],
         color,
         data['notes'],
         client_id,
@@ -230,11 +229,20 @@ def add_event():
             start_dt = datetime.fromisoformat(data['start'])
             date = start_dt.strftime("%A, %B, %d, %Y")
             time = start_dt.strftime("%I:%M %p")
-            body = f"Hi! Your appointment is confirmed for {date} at {time}."
-            subject = 'Appointment Confirmation'
-            recipient = 'stampflLMT@gmail.com'
 
-            send_appointment_email(recipient, subject, body)
+            # Get client's email based on client_id
+            conn = sqlite3.connect(DB_PATH)
+            c = conn.cursor()
+            c.execute('SELECT EMAIL FROM clients WHERE id=?', (client_id,))
+            result = c.fetchone()
+            conn.close()
+
+            if result and result[0]:
+                recipient = result[0]
+                body = f"Hi! Your appointment is confirmed for {date} at {time}."
+                subject = 'Appointment Confirmation'
+                # recipient = 'stampflLMT@gmail.com'    
+                send_appointment_email(recipient, subject, body)
         
         return jsonify({'status': 'success', 'id': event_id})
     
