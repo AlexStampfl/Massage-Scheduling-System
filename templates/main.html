@@ -20,9 +20,9 @@
             <select id="appointmentType">
                 <option></option>
                 <option id="block_time_off" class="block_time_off">Block Time Off</option>
-                <option id="service_one" class="service_one">Service #1</option>
+                <!-- <option id="service_one" class="service_one">Service #1</option>
                 <option id="service_two" class="service_two">Service #2</option>
-                <option id="service_three" class="service_three">Service #3</option>
+                <option id="service_three" class="service_three">Service #3</option> -->
             </select>
             <br>
             <br>
@@ -57,6 +57,8 @@
             </button>
         </div>
     </div>
-     <script src="{{ url_for('static', filename = 'calendar.js') }}" defer></script>
+
+    <script src="{{ url_for('static', filename = 'shared.js') }}" defer></script>
+    <script src="{{ url_for('static', filename = 'calendar.js') }}" defer></script>
 </body>
 </html>

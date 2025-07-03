@@ -1,6 +1,8 @@
 // Initialize calendar
 var calendarEl = document.getElementById('calendar');
 
+// let globalServices = [];
+
 async function updateEventTimeOnServer(event, revertFunc) { // async functions always return a promise
     const updatedData = {
         // Grab the updated fields
@@ -45,17 +47,8 @@ var calendar = new FullCalendar.Calendar(calendarEl, {
             const buffer = parseInt(settings.buffer_time_after || 0);
 
             const allEvents = [];
-
             events.forEach(event => {
-                // calendar.addEvent(event);
-
-                // Only add event if it has a valid start and end time
-                if (!event.start || !event.end) {
-                    console.warn("Skipping event with invalid time:", event);
-                    return;
-                }
-
-                allEvents.push(event); // Add the base event
+                allEvents.push(event);
 
                 // Handle recurring events
                 if (event.recurrence && event.recurrence !== 'none') {
@@ -89,18 +82,10 @@ var calendar = new FullCalendar.Calendar(calendarEl, {
                     const bufferEnd = new Date(endTime.getTime() + buffer * 60000);
 
                     allEvents.push({
-                        // start: event.end,
-                        // start: endTime,
                         start: endTime.toISOString(),
-                        // end: bufferEnd,
                         end: bufferEnd.toISOString(),
-                        // end: bufferEnd.toISOString(),
                         display: 'background',
                         backgroundColor: '#8e44ad',
-                        // overlap: false,
-                        // overlap: function (event) {
-                        //     return event.display !== 'background' // Blocks selecting over buffer areas
-                        // },
                         overlap: (e) => e.display !== 'background',
                         editable: false,
                         selectable: false,
@@ -116,7 +101,7 @@ var calendar = new FullCalendar.Calendar(calendarEl, {
 
     editable: true, // determines if the events can be dragged and resized
     eventStartEditable: true,
-    eventColor: 'violet',
+    // eventColor: 'violet',
 
     // Logic for adding new appointment
     select: function (info) {
@@ -235,6 +220,10 @@ let selectedTimeInfo = null;
 // Event listener function for the Save Button in the modal
 async function handleSaveClick() {
     const appointment = document.getElementById("appointmentType").value; // drop down menu with options
+
+    const selectedService = globalServices.find(s => s.name === appointment);
+    const eventColor = selectedService?.color || "#999999";
+
     const startTime = document.getElementById("editStart").value;
     const endTime = document.getElementById("editEnd").value;
     const notes = document.getElementById("notes").value;
@@ -245,8 +234,6 @@ async function handleSaveClick() {
     const recurrence = document.getElementById("recurrence").value;
 
     // Final title to display on calendar
-    // const fullTitle = `${clientName} - ${appointment}`;
-
     let fullTitle;
 
     if (appointment === 'Block Time Off' && notes.trim()) {
@@ -254,7 +241,6 @@ async function handleSaveClick() {
     } else {
         fullTitle = `${clientName} - ${appointment}`;
     }
-
 
     // Extract date from `selectedTimeInfo`
     let date = null;
@@ -287,28 +273,11 @@ async function handleSaveClick() {
         timeInputs.forEach(input => input.disabled = this.checked);
     })
 
-    // Set color dynamically based on event
-    let eventColor = 'violet';
-    if (appointment === 'Block Time Off') {
-        eventColor = 'lightgray';
-    }
-    else if (appointment === 'Service #1') {
-        eventColor = 'green';
-    }
-    else if (appointment === 'Service #2') {
-        eventColor = 'orange';
-    }
-    else if (appointment === 'Service #3') {
-        eventColor = 'blue';
-    }
-
-
-
     // Handles form submission
     if (selectedEvent) {
         // Edit an existing event
         // setProp makes the title change correctly, however setExtendedProp causes the title to not change
-        selectedEvent.setProp("title", `${clientName} - ${appointment}`);
+        selectedEvent.setProp("title", fullTitle);
         selectedEvent.setDates(start, end, { allDay: isAllDay });
         selectedEvent.setExtendedProp("notes", notes);
         selectedEvent.setProp("color", eventColor); // sets color while editing dynamically
@@ -476,6 +445,10 @@ function deleteAppointment() {
         }
     });
 }
+
+window.addEventListener('DOMContentLoaded', () => {
+    loadServices(); // Populates globalServices before anything else needs it
+})
 
 myModal();
 populateClientDropdown();

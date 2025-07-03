@@ -40,36 +40,22 @@ document.addEventListener('DOMContentLoaded', function() {
 document.getElementById("addServiceForm").addEventListener("submit", async function(e) {
     e.preventDefault();
     const name = document.getElementById("newServiceName").value;
+    const color = document.getElementById("newServiceColor").value;
 
     const response = await fetch("/add-service", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({  name })
+        body: JSON.stringify({  name, color })
     });
 
     if (response.ok) {
-        document.getElementById("newServiceName").value = "";
+        document.getElementById("newServiceName").value = ""; // Default?
+        document.getElementById("newServiceColor").value = "#cccccc";
         loadServices();
     }
 });
 
-async function loadServices() {
-    const res = await fetch("/get-services");
-    const services = await res.json();
-    const list = document.getElementById("serviceList");
-    list.innerHTML = "";
-    services.forEach(service => {
-        const li = document.createElement("li");
-        // li.textContent = service.name;
-        li.dataset.id = service.id;
-        li.innerHTML = `
-            ${service.name}
-            <button class="delete-service">Delete</button>
-        `;
-        list.appendChild(li);
-    });
-    deleteButtons();
-}
+
 
 function deleteButtons() {
     document.querySelectorAll('.delete-service').forEach(button => {

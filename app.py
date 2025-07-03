@@ -65,10 +65,6 @@ def index(): # Creates a function bound with '/' route
     return render_template('main.html', calendar=calendar)
 
 
-
-
-
-
 # POST - Route URL for add-client page
 @app.route('/add-client', methods=['POST']) # POST - sends form data to server.
 def add_client():
@@ -165,18 +161,18 @@ def upgrade_db():
     conn = sqlite3.connect(DB_PATH)
     c = conn.cursor()
     try:
-        c.execute('ALTER TABLE clients ADD COLUMN client_id INTEGER')
+        c.execute('ALTER TABLE events ADD COLUMN appointment_type TEXT')
     except sqlite3.OperationalError:
         pass # Ignore if already exists
 
-    try:
-        c.execute('ALTER TABLE clients ADD COLUMN notes TEXT')
-    except sqlite3.OperationalError:
-        pass # Ignore if already exists
+    # try:
+    #     c.execute('ALTER TABLE clients ADD COLUMN notes TEXT')
+    # except sqlite3.OperationalError:
+    #     pass # Ignore if already exists
 
     conn.commit()
     conn.close()
-    return "Database upgraded: client_id and notes columns ensured."
+    return "Events table upgraded."
 
 
 # Save events to the database - used to persist events (or edited ones) from calendar UI into backend
@@ -191,19 +187,36 @@ def add_event():
         client_id = data.get('client_id') #safely access it
         conn = sqlite3.connect(DB_PATH)
         c = conn.cursor()
+
+        appointment_type = data.get('appointment_type', '')
+        color = data.get('color')
+
+        # If no color was passed directly, try to get it based on service type
+        if not color and appointment_type:
+            cursor = conn.cursor()
+            cursor.execute("SELECT color FROM services WHERE name = ?", (appointment_type,))
+            service_row = cursor.fetchone()
+            if service_row:
+                color = service_row[0]
+            else:
+                color = "#999999" # Shouldn't this not be hardcoded??
+
+        print("Saving event:", data)
         # This was a sticking point for me, I need to pay better attention to detail, I didn't have client_id below, and was missing a 7th ?
         c.execute('''
-            INSERT INTO events (title, start, end, allDay, color, notes, client_id, recurrence) 
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO events (title, start, end, allDay, color, notes, client_id, recurrence, appointment_type) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
         ''', (
         data['title'],
         data['start'],
         data['end'],
         int(data['allDay']),
-        data['color'],
+        # data['color'],
+        color,
         data['notes'],
         client_id,
-        recurrence
+        recurrence,
+        appointment_type
         ))
         conn.commit()
         event_id = c.lastrowid # get ID of the newly inserted row
@@ -235,10 +248,11 @@ def get_events():
     conn = sqlite3.connect(DB_PATH)
     c = conn.cursor()
     c.execute('''
-              SELECT e.id, e.title, e.start, e.end, e.allDay, e.color, e.notes, e.client_id, e.recurrence,
-              c.first_name, c.last_name
+              SELECT e.id, e.title, e.start, e.end, e.allDay, e.notes, e.client_id, e.recurrence,
+              c.first_name, c.last_name, e.appointment_type, e.color
         FROM events e
         LEFT JOIN clients c ON e.client_id = c.id
+        LEFT JOIN services s ON e.appointment_type = s.name
         ''')
     rows = c.fetchall()
     conn.close()
@@ -246,35 +260,39 @@ def get_events():
     events = []
     # print(row)
     for row in rows:
-        event_id = row[0] # just added at 7:18 on 6/20/25
-        appointment_type = row[1] or ""
-        start = row[2]
-        end = row[3]
-        all_day = bool(row[4])
-        color = row[5]
-        notes = row[6]
-        client_id = row[7]
-        recurrence = row[8] or "none"
-        first_name = row[9] or ""
-        last_name = row[10] or ""
-        client_name = f"{first_name} {last_name}".strip()
+        event_id, title, start, end, all_day, notes, client_id, recurrence, first_name, last_name, appointment_type, color = row
+        client_name = f"{first_name or ''} {last_name or ''}".strip()
 
+        fullTitle = title if title else (notes if notes else "Blocked Time")
+        
         # Full title shown in calendar
-        # full_title = f"{client_name} - {appointment_type}" if client_name else appointment_type
         if client_name and appointment_type:
-            full_title = f"{client_name} - {appointment_type}"
-        elif appointment_type: # fallback if appiontment_type exists but no client
-            full_title = appointment_type
-        elif notes: # use notes if no client or appointment type
-            full_title = notes
-        else:
-            full_title = "Blocked Time"
+            fullTitle = f"{client_name} - {appointment_type}"
+        elif appointment_type and not title: # fallback if appiontment_type exists but no client
+            fullTitle = appointment_type
+        elif notes and not title: # use notes if no client or appointment type
+            fullTitle = notes
+        elif not title:
+            fullTitle = "Blocked Time"
 
+        # event_id = row[0] # just added at 7:18 on 6/20/25
+        # appointment_type = row[1] or ""
+        # start = row[3]
+        # end = row[4]
+        # all_day = bool(row[5])
+        # notes = row[6]
+        # client_id = row[7]
+        # recurrence = row[8] or "none"
+        # first_name = row[9] or ""
+        # last_name = row[10] or ""
+        # color = row[11] or "#999999" # fallback if service.color is NULL
+
+        event_color = color if color else "#999999"
 
         # This was one of the biggest issues I had, and the solution was simple: make sure the columns and indexes match
         events.append({
             'id': event_id,
-            'title': full_title,
+            'title': fullTitle,
             'start': start,
             'end': end,
             'allDay': all_day,
@@ -298,11 +316,13 @@ def create_events_table():
             end TEXT,
             allDay INTEGER,
             color TEXT,
-            notes TEXT
+            notes TEXT,
+            appointment_type TEXT
         )
     ''')
     conn.commit()
     conn.close()
+
 
 
 # Create settings table
@@ -412,10 +432,14 @@ def settings():
 
 @app.route('/add-service', methods=['POST'])
 def add_service():
-    name = request.json.get('name')
+    # name = request.json.get('name')
+    data = request.get_json() # Extract JSON data before trying to access data.get
+    name = data['name']
+    color = data.get('color', '#999999') # Default gray if not provided
+
     conn = sqlite3.connect(DB_PATH)
     c = conn.cursor()
-    c.execute("INSERT INTO services (name) VALUES (?)", (name,))
+    c.execute("INSERT INTO services (name, color) VALUES (?, ?)", (name, color))
     conn.commit()
     conn.close()
     return jsonify({'status':'success'})
@@ -424,10 +448,13 @@ def add_service():
 def get_services():
     conn = sqlite3.connect(DB_PATH)
     c = conn.cursor()
-    c.execute("SELECT id, name FROM services")
-    services = [{'id': row[0], 'name': row[1]} for row in c.fetchall()]
+    c.execute("SELECT id, name, color FROM services")
+    services = [{'id': row[0], 'name': row[1], 'color': row[2]} for row in c.fetchall()]
     conn.close()
     return jsonify(services)
+
+
+
 
 @app.route('/delete-service', methods=['POST'])
 def delete_service():

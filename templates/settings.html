@@ -28,14 +28,14 @@
         </form>
         <h3>Add Services</h3>
         <form id="addServiceForm">
-            <!-- <label>Add Services</label><br> -->
-
             <input type="text" id="newServiceName" placeholder="Service name" required>
+            <input type="color" id="newServiceColor" value="#cccccc" title="Choose a color">
             <br>
             <button type="submit">Add Service</button>
         </form>
         <ul id="serviceList"></ul>
     </div>
+    <script src="{{ url_for('static', filename = 'shared.js') }}" defer></script>
     <script src = "{{ url_for('static', filename = 'calendar.js') }}" defer></script>
     <script src = "{{ url_for('static', filename = 'settings.js') }}" defer></script>
 </body>
