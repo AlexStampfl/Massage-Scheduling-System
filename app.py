@@ -181,6 +181,8 @@ def add_event():
     data = request.get_json()
     print("Incoming data:", data) # For debugging
 
+    send_email = data.get('send_email', False)
+
     recurrence = data.get('recurrence', 'none')
 
     try:
@@ -223,15 +225,16 @@ def add_event():
         conn.close()
         
         # Email logic
-        from datetime import datetime
-        start_dt = datetime.fromisoformat(data['start'])
-        date = start_dt.strftime("%A, %B, %d, %Y")
-        time = start_dt.strftime("%I:%M %p")
-        body = f"Hi! Your appointment is confirmed for {date} at {time}."
-        subject = 'Appointment Confirmation'
-        recipient = 'client@example.com'
+        if send_email:
+            from datetime import datetime
+            start_dt = datetime.fromisoformat(data['start'])
+            date = start_dt.strftime("%A, %B, %d, %Y")
+            time = start_dt.strftime("%I:%M %p")
+            body = f"Hi! Your appointment is confirmed for {date} at {time}."
+            subject = 'Appointment Confirmation'
+            recipient = 'stampflLMT@gmail.com'
 
-        send_appointment_email(recipient, subject, body)
+            send_appointment_email(recipient, subject, body)
         
         return jsonify({'status': 'success', 'id': event_id})
     

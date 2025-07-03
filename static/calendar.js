@@ -233,6 +233,8 @@ async function handleSaveClick() {
     const clientName = clientDropdown.options[clientDropdown.selectedIndex].text;
     const recurrence = document.getElementById("recurrence").value;
 
+    const sendEmail = document.getElementById("sendEmailCheckbox").checked;
+
     // Final title to display on calendar
     let fullTitle;
 
@@ -288,6 +290,7 @@ async function handleSaveClick() {
                 headers: {
                     'Content-Type': 'application/json'
                 },
+                // Fetch body
                 body: JSON.stringify({
                     title: fullTitle,
                     start: start,
@@ -296,7 +299,8 @@ async function handleSaveClick() {
                     color: eventColor,
                     notes: notes,
                     client_id: clientId,
-                    recurrence: recurrence
+                    recurrence: recurrence,
+                    send_email: sendEmail
                 })
             });
 
