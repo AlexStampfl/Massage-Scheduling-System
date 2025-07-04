@@ -65,6 +65,22 @@
             </button>
         </div>
     </div>
+    <div id="deleteConfirmModal" class="modal" style="display:none;">
+        <div class="modal-content">
+            <h3>Delete Appointment</h3>
+            <p>Are you sure you want to delete this appointment?</p>
+
+            <label>
+                <input type="checkbox" id="sendCancelEmail">
+                Send cancellation notice to client
+            </label>
+
+            <div style="margin-top: 1em;">
+                <button id="confirmDeleteBtn">Yes, delete</button>
+                <button onclick="document.getElementById('deleteConfirmModal').style.display='none'">Cancel</button>
+            </div>
+        </div>
+    </div>
 
     <script src="{{ url_for('static', filename = 'shared.js') }}" defer></script>
     <script src="{{ url_for('static', filename = 'calendar.js') }}" defer></script>

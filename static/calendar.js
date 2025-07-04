@@ -33,7 +33,6 @@ async function updateEventTimeOnServer(event, revertFunc) { // async functions a
 var calendar = new FullCalendar.Calendar(calendarEl, {
     initialView: 'dayGridMonth',
     selectable: true, // allows selecting date/time
-    // events: '/get-events', // Flask route returns JSON array of events
     events: async function (fetchInfo, successCallback, failureCallback) {
         try {
             // Fetch appointments
@@ -66,7 +65,6 @@ var calendar = new FullCalendar.Calendar(calendarEl, {
                             end.setDate(end.getDate() + 7 * i);
                         }
 
-                        // calendar.addEvent({
                         allEvents.push({
                             ...event,
                             start: start.toISOString(),
@@ -176,6 +174,7 @@ var calendar = new FullCalendar.Calendar(calendarEl, {
         document.getElementById("recurrence").value = info.event.extendedProps?.recurrence || 'none';
     },
 
+
     // Calendar header options - header toolbar
     headerToolbar: {
         left: 'prev,next today clients',
@@ -235,9 +234,15 @@ async function handleSaveClick() {
 
     const sendEmail = document.getElementById("sendEmailCheckbox").checked;
 
+
+    // // Event listener for trash button
+    // const trashBtn = document.getElementById("deleteBtn");
+    // trash.addEventListener("click", () => {
+    //     document.getElementById("deleteConfirmModel").style.display = "block";
+    // });
+
     // Final title to display on calendar
     let fullTitle;
-
     if (appointment === 'Block Time Off' && notes.trim()) {
         fullTitle = notes.trim() || "Blocked Time"; // use notes as title
     } else {
@@ -245,23 +250,13 @@ async function handleSaveClick() {
     }
 
     // Extract date from `selectedTimeInfo`
-    let date = null;
-
+    // let date = null;
     // If adding a new event, display clicked date
-    if (selectedTimeInfo) {
-        date = selectedTimeInfo.startStr.split("T")[0]; // "2025-05-21"
-    } else if (selectedEvent) {
-        date = selectedEvent.startStr.split("T")[0];
-    }
-
+    let date = selectedTimeInfo ? selectedTimeInfo.startStr.split("T")[0] : (selectedEvent ? selectedEvent.startStr.split("T")[0] : null);
     let isAllDay = document.getElementById("allDayToggle").checked;
-
-    // If no times provided, default to all-day
-    if (!startTime && !endTime) {
-        isAllDay = true;
-    }
-
+    if (!startTime && !endTime) isAllDay = true;
     let start, end;
+    
     if (isAllDay) {
         start = date; // just the date string, no time
         end = date;
@@ -269,6 +264,8 @@ async function handleSaveClick() {
         start = `${date}T${startTime}`;
         end = `${date}T${endTime}`;
     }
+    // If no times provided, default to all-day
+    
 
     document.getElementById("allDayToggle").addEventListener("change", function () {
         const timeInputs = [document.getElementById("editStart"), document.getElementById("editEnd")];
@@ -398,62 +395,91 @@ async function populateServicesDropdown() {
 
 // Exit modal
 function myModal() {
-    const modal = document.getElementById("modal");
-    const closeModalBtn = document.querySelector(".close-btn");
-
-    if (closeModalBtn) {
-        closeModalBtn.addEventListener("click", () => {
-            modal.style.display = "none"
+    const modal = [document.getElementById("modal"), document.getElementById("deleteConfirmModal")];
+    const closeModalBtn = document.querySelectorAll(".close-btn");
+    closeModalBtn.forEach(btn => {
+        btn.addEventListener("click", () => {
+            modal.forEach(modal => modal.style.display = "none");
         });
-    }
-}
-
-// Delete appointment (Not cancel, just delete)
-function deleteAppointment() {
-    const deleteEvent = document.getElementById("delete_event");
-
-    deleteEvent.addEventListener('click', () => {
-        if (selectedEvent) {
-            const id = selectedEvent.id;
-
-            // fetch to inform the backend of the deletion
-            fetch('delete-event', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ id })
-            }).then(response => {
-                if (response.ok) {
-                    selectedEvent.remove(); // Remove from UI
-                    selectedEvent = null; // Reset selection
-
-                    document.getElementById("appointmentType").value = "";
-                    document.getElementById("editStart").value = "";
-                    document.getElementById("editEnd").value = "";
-                    document.getElementById("notes").value = "";
-                    document.getElementById("modal").style.display = "none"; // close the modal
-                } else {
-                    return response.json().then(err => {
-                        console.error("Failed to delete on server");
-                        alert("Failed to delete appointment. Please try again.");
-                    });
-                }
-            }).catch(err => {
-                console.error("Delete error:", err);
-                alert("An error occurred while deleting the appointment.");
-            });
-        } else {
-            console.warn("No event selected for deletion");
-            alert("Please select an event to delete.");
-        }
+    });
+    window.addEventListener("click", (event) => {
+        modal.forEach(modal => {
+            if (event.target === modal) modal.style.display = "none";
+        });
     });
 }
+
+// Pure function to delete selected appointment
+function deleteAppointment(sendEmail = false) {
+    if (!selectedEvent) {
+        console.warn("No event selected for deletion");
+        alert("Please select an event to delete");
+        return;
+    }
+
+    // const id = selectedEvent.id;
+
+    fetch('/delete-event', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            id: selectedEvent.id,
+            send_email: sendEmail
+        })
+    })
+    .then(response => {
+        if (response.ok) {
+            selectedEvent.remove();
+            selectedEvent = null;
+            document.getElementById("modal").style.display = "none"; // Close modal
+            document.getElementById("appointmentType").value = "";
+            document.getElementById("editStart").value = "";
+            document.getElementById("editEnd").value = "";
+            document.getElementById("notes").value = "";
+        } else {
+            return response.json().then(err => {
+                console.error("Failed to delete on server:", err);
+                alert("Failed to delete appointment. Please try again."); 
+            });
+        }
+    })
+    .catch(err => {
+        console.error("Delete error:", err);
+        alert("An error ocurred while deleting the appointment.");
+    });
+}
+
+
+document.addEventListener("DOMContentLoaded", () => {
+    document.getElementById("save").addEventListener("click", handleSaveClick);
+    populateClientDropdown();
+    // deleteAppointment();
+    populateServicesDropdown();
+    myModal();
+
+    const deleteButton = document.getElementById("delete_event");
+    if (deleteButton) {
+        deleteButton.addEventListener("click", () => {
+            if (selectedEvent) {
+                document.getElementById("deleteConfirmModal").style.display = "block";
+            } else {
+                alert("Please select an event to delete.");
+            }
+        });
+    }
+
+    const confirmDeleteBtn = document.getElementById("confirmDeleteBtn");
+    if (confirmDeleteBtn) {
+        confirmDeleteBtn.addEventListener("click", () => {
+            const sendEmail = document.getElementById("sendCancelEmail")?.checked || false;
+            deleteAppointment(sendEmail);
+            document.getElementById("deleteConfirmModal").style.display = "none";
+        });
+    }
+
+});
 
 window.addEventListener('DOMContentLoaded', () => {
     loadServices(); // Populates globalServices before anything else needs it
 })
 
-myModal();
-populateClientDropdown();
-deleteAppointment();

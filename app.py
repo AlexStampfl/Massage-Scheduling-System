@@ -411,13 +411,44 @@ def update_event():
 def delete_event():
     data = request.get_json()
     event_id = data.get('id')
+    send_email = data.get('send_email', False)
 
     try:
         conn = sqlite3.connect(DB_PATH)
         c = conn.cursor()
+
+        # Only fetch email if checkbox is checked
+        if send_email:
+            c.execute('''
+                SELECT e.start, c.email
+                FROM events e
+                JOIN clients c ON e.client_id = c.id
+                WHERE e.id = ?
+        ''', (event_id,))
+            
+        row = c.fetchone()
+
+        if row:
+            start_time, recipient_email = row
+
+        # result = c.fetchone()
+
+        # if result:
+        #     start_time, email = result
+            from datetime import datetime
+            dt = datetime.fromisoformat(start_time)
+            date = dt.strftime("%A, %B, %d, %Y")
+            time = dt.strftime("%I:%M %p")
+
+            subject = "Appointment Cancelled"
+            body = f"Hi, your appointment on {date} at {time} has been cancelled."
+            send_appointment_email(recipient_email, subject, body)
+
+
         c.execute('DELETE FROM events WHERE id = ?', (event_id,))
         conn.commit()
         conn.close()
+    
         return jsonify({'status': 'deleted'})
     except Exception as e:
         print("Error deleting event:", str(e))
