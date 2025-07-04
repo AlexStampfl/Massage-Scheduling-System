@@ -142,7 +142,6 @@ function updateClientInfo() {
     })
 }
 
-
 // Delete Client
 function deleteClient() {
     document.addEventListener('click', async (e) => {

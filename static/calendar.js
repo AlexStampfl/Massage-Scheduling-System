@@ -1,8 +1,6 @@
 // Initialize calendar
 var calendarEl = document.getElementById('calendar');
 
-// let globalServices = [];
-
 async function updateEventTimeOnServer(event, revertFunc) { // async functions always return a promise
     const updatedData = {
         // Grab the updated fields
@@ -99,7 +97,6 @@ var calendar = new FullCalendar.Calendar(calendarEl, {
 
     editable: true, // determines if the events can be dragged and resized
     eventStartEditable: true,
-    // eventColor: 'violet',
 
     // Logic for adding new appointment
     select: function (info) {
@@ -231,15 +228,8 @@ async function handleSaveClick() {
     const clientDropdown = document.getElementById("clientDropdown");
     const clientName = clientDropdown.options[clientDropdown.selectedIndex].text;
     const recurrence = document.getElementById("recurrence").value;
-
     const sendEmail = document.getElementById("sendEmailCheckbox").checked;
 
-
-    // // Event listener for trash button
-    // const trashBtn = document.getElementById("deleteBtn");
-    // trash.addEventListener("click", () => {
-    //     document.getElementById("deleteConfirmModel").style.display = "block";
-    // });
 
     // Final title to display on calendar
     let fullTitle;
@@ -250,7 +240,6 @@ async function handleSaveClick() {
     }
 
     // Extract date from `selectedTimeInfo`
-    // let date = null;
     // If adding a new event, display clicked date
     let date = selectedTimeInfo ? selectedTimeInfo.startStr.split("T")[0] : (selectedEvent ? selectedEvent.startStr.split("T")[0] : null);
     let isAllDay = document.getElementById("allDayToggle").checked;

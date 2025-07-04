@@ -165,11 +165,6 @@ def upgrade_db():
     except sqlite3.OperationalError:
         pass # Ignore if already exists
 
-    # try:
-    #     c.execute('ALTER TABLE clients ADD COLUMN notes TEXT')
-    # except sqlite3.OperationalError:
-    #     pass # Ignore if already exists
-
     conn.commit()
     conn.close()
     return "Events table upgraded."
@@ -285,18 +280,6 @@ def get_events():
             fullTitle = notes
         elif not title:
             fullTitle = "Blocked Time"
-
-        # event_id = row[0] # just added at 7:18 on 6/20/25
-        # appointment_type = row[1] or ""
-        # start = row[3]
-        # end = row[4]
-        # all_day = bool(row[5])
-        # notes = row[6]
-        # client_id = row[7]
-        # recurrence = row[8] or "none"
-        # first_name = row[9] or ""
-        # last_name = row[10] or ""
-        # color = row[11] or "#999999" # fallback if service.color is NULL
 
         event_color = color if color else "#999999"
 
@@ -510,7 +493,6 @@ def delete_service():
         return jsonify({'status':'success'})
     except Exception as e:
         return jsonify({'status':'error', 'message':str(e)}), 500
-
 
 
 # End of app
