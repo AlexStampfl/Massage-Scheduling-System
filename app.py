@@ -7,6 +7,7 @@ from dotenv import load_dotenv
 from datetime import datetime
 import sqlite3
 import os
+import re
 
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -69,11 +70,27 @@ def index(): # Creates a function bound with '/' route
 # POST - Route URL for add-client page
 @app.route('/add-client', methods=['POST']) # POST - sends form data to server.
 def add_client():
-    first = request.form['first']
-    last = request.form['last']
-    phone = request.form['phone']
-    email = request.form['email']
-    notes = request.form['notes'] # Just added
+    # Old version
+    # first = request.form['first']
+    # last = request.form['last']
+    # phone = request.form['phone']
+    # email = request.form['email']
+    # notes = request.form['notes']
+
+    # Santized version
+    first = sanitize_input(request.form.get('first'), 50)
+    last = sanitize_input(request.form.get('last'), 50)
+    phone = sanitize_input(request.form.get('phone'), 20)
+    email = sanitize_input(request.form.get('email'), 100)
+    notes = sanitize_input(request.form.get('notes'), 500)
+
+    # Backend validation
+    if not re.match(r'^\d{10,15}$', phone):
+        return "Invalid phone number format", 400
+    
+    if not re.match(r'^[^@]+@[^@]+\.[^@]+$', email):
+        return "Invalid email format", 400
+    
 
     print("Adding client:", first, last, phone, email, notes)
 
@@ -127,11 +144,26 @@ def get_client(id):
 def update_client(client_id):
     data = request.get_json()
 
-    first = data['first']
-    last = data['last']
-    phone = data['phone']
-    email = data['email']
-    notes = data['notes']
+    # first = data['first']
+    # last = data['last']
+    # phone = data['phone']
+    # email = data['email']
+    # notes = data['notes']
+
+    # Sanitize inputs
+    first = sanitize_input(data.get('first'), 50)
+    last = sanitize_input(data.get('last'), 50)
+    phone = sanitize_input(data.get('phone'), 20)
+    email = sanitize_input(data.get('email'), 100)
+    notes = sanitize_input(data.get('notes'), 500)
+
+    # Validate formats
+    if not re.match(r'^\d{10,15}$', phone):
+        return "Invalid phone number format", 400
+    
+    if not re.match(r'^[^@]+@[^@]+\.[^@]+$', email):
+        return "Invalid email format", 400
+
 
     conn = sqlite3.connect(DB_PATH)
     c = conn.cursor()
@@ -186,8 +218,10 @@ def add_event():
         conn = sqlite3.connect(DB_PATH)
         c = conn.cursor()
 
-        appointment_type = data.get('appointment_type', '')
-        color = data.get('color')
+        # appointment_type = data.get('appointment_type', '')
+        # color = data.get('color')
+        appointment_type = sanitize_input(data.get('appointment_type'), 50)
+        color = sanitize_input(data.get('color'), 7)
 
         # If no color was passed directly, try to get it based on service type
         if not color and appointment_type:
@@ -458,10 +492,12 @@ def settings():
 
 @app.route('/add-service', methods=['POST'])
 def add_service():
-    # name = request.json.get('name')
     data = request.get_json() # Extract JSON data before trying to access data.get
-    name = data['name']
-    color = data.get('color', '#999999') # Default gray if not provided
+    # name = data['name']
+    # color = data.get('color', '#999999')
+
+    name = sanitize_input(data['name'], 50)
+    color = sanitize_input(data.get('color'), 7)
 
     conn = sqlite3.connect(DB_PATH)
     c = conn.cursor()
@@ -553,6 +589,16 @@ def client_details(client_id):
 
     conn.close()
     return jsonify(client_data)
+
+
+# Sanitize and validate
+def sanitize_input(value, max_length=255):
+    if not value:
+        return ""
+    value = value.strip() # remove leading/trailing whitespace
+    value = re.sub(r'[<>]', '', value) # Remove angle brackets to reduce XSS risk
+    return value[:max_length]
+
 
 
 # End of app
