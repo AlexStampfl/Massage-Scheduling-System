@@ -317,3 +317,15 @@ form button {
 #serviceList button.delete-service {
   margin-left: 10px;
 }
+
+.client_modal_content {
+    color: black;
+    text-align: left;
+}
+
+.close-detail-btn {
+    font-weight: bold;
+    /* text-align: right; */
+    float: right;
+    cursor: pointer;
+}

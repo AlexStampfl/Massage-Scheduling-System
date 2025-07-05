@@ -37,7 +37,8 @@
 
             <tbody id="clientTableBody">
                 {% for client in clients %}
-                <tr>
+                <!-- <tr> -->
+                <tr class="client-row" data-id="{{ client[0] }}">
                     <td><input type="checkbox"></td>
                     <td>{{ client[2] if client[2] else "" }}</td> <!-- Last name-->
                     <td>{{ client[1] if client[1] else "" }}</td> <!-- First name-->
@@ -94,6 +95,18 @@
                         alt="Delete trash can icon">
                 </button>
             </form>
+        </div>
+    </div>
+    <div id="clientDetailModal" class="modal">
+        <div class="client_modal_content">
+            <span class="close-detail-btn">&times;</span>
+            <h1 id="clientDetailName"></h1>
+            <p><strong>Email:</strong> <span id="clientDetailEmail"></span></p>
+            <p><strong>Phone:</strong> <span id="clientDetailPhone"></span></p>
+            <p><strong>Notes:</strong> <span id="clientDetailNotes"></span></p>
+            <hr>
+            <h3>Appointment History</h3>
+            <ul id="clientDetailAppointments"></ul>
         </div>
     </div>
     <script src="{{ url_for('static', filename = 'client_list.js') }}" defer></script>

@@ -109,6 +109,58 @@ document.querySelectorAll(".edit_client").forEach(button => {
     });
 
 
+document.addEventListener("DOMContentLoaded", function () {
+    document.querySelectorAll(".client-row").forEach(row => {
+        row.addEventListener("click", function (e) {
+            if (e.target.closest(".menu_cell") || e.target.closest(".dropdown_menu")) return;
+            
+            // Skip click if it's on the meatball menu
+            const clientId = this.getAttribute("data-id");
+            fetch(`/client/${clientId}/details`)
+                .then(res => res.json())
+                .then(data => showClientDetailModal(data))
+                .catch(err => console.error("Error fetching client details:", err));
+        });
+    });
+});
+
+function showClientDetailModal(data) {
+    document.getElementById("clientDetailName").textContent = `${data.first_name} ${data.last_name}`;
+    document.getElementById("clientDetailEmail").textContent = data.email || "_";
+    document.getElementById("clientDetailPhone").textContent = data.phone || "_";
+    document.getElementById("clientDetailNotes").textContent = data.notes || "None";
+
+    const list = document.getElementById("clientDetailAppointments");
+    list.innerHTML = "";
+
+    if (data.appointments && data.appointments.length > 0) {
+        data.appointments.forEach(appt => {
+            const li = document.createElement("li");
+            // li.textContent = `${appt.date} - ${appt.service}`;
+            li.textContent = appt.date;
+            list.appendChild(li);
+        }); 
+    } else {
+        list.innerHTML = "<li>No past appointments.</li>";
+    }
+
+    document.getElementById("clientDetailModal").style.display = "block";
+}
+
+// Close detail modal
+// document.querySelector(".close-detail-btn").addEventListener("click", () => {
+//     document.getElementById("clientDetailModal").style.display = "none";
+// })
+
+// safer version - learn more later
+const closeDtailBtn = document.querySelector(".close-detail-btn");
+if (closeDtailBtn) {
+    closeDtailBtn.addEventListener("click", () => {
+        document.getElementById("clientDetailModal").style.display = "none";
+    })
+}
+
+
 // Edit and Update client
 function updateClientInfo() {
     // Listener for saving updates via PUT request

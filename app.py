@@ -4,6 +4,7 @@
 from flask import Flask, jsonify, render_template, request, redirect, url_for
 from flask_mail import Mail, Message
 from dotenv import load_dotenv
+from datetime import datetime
 import sqlite3
 import os
 
@@ -479,8 +480,6 @@ def get_services():
     return jsonify(services)
 
 
-
-
 @app.route('/delete-service', methods=['POST'])
 def delete_service():
     service_id = request.json.get('id')
@@ -493,6 +492,67 @@ def delete_service():
         return jsonify({'status':'success'})
     except Exception as e:
         return jsonify({'status':'error', 'message':str(e)}), 500
+    
+
+# route for client detail read-only modal in client list page
+@app.route('/client/<int:client_id>/details')
+def client_details(client_id):
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
+
+    # Get client info
+    c.execute('SELECT first_name, last_name, phone, email, notes FROM clients WHERE id = ?', (client_id,))
+    client_row = c.fetchone(
+
+    )
+    if not client_row:
+        conn.close()
+        return jsonify({'error': 'Client not found'}), 404
+
+    client_data = {
+        'first_name': client_row[0],
+        'last_name': client_row[1],
+        'phone': client_row[2],
+        'email': client_row[3],
+        'notes': client_row[4],
+        'appointments': []
+    }
+
+    # Get appointment history for client
+    c.execute('''
+        SELECT start, appointment_type
+        FROM events
+        WHERE client_id = ?
+        ORDER BY start DESC
+    ''', (client_id,))
+    appointments = c.fetchall()
+
+    client_data['appointments'] = []
+    for appt in appointments:
+        raw_start = appt[0]
+
+        # Fix value format
+        if 'T' in raw_start:
+            parts = raw_start.split('T')
+            if len(parts) >= 3:
+                raw_start = f"{parts[0]}T{parts[2]}"
+
+        try:
+            # dt = datetime.fromisoformat(appt[0])
+            dt = datetime.fromisoformat(raw_start)
+            formatted_date = dt.strftime('%A, %B %d, %Y at %I:%M %p')
+            print("Raw start value:", appt[0])
+        except Exception:
+            # formatted_date = appt[0] # fallback to raw string if bad format
+            formatted_date = raw_start
+
+        client_data['appointments'].append({
+            'date': formatted_date,
+            # 'service': appt[1] or 'N/A'
+        })
+
+    conn.close()
+    return jsonify(client_data)
 
 
 # End of app
