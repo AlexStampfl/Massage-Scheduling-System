@@ -404,21 +404,36 @@ def update_settings():
 def update_event():
     data = request.get_json()
     event_id = data.get('id')
-    start = data.get('start')
-    end = data.get('end')
-    all_day = int(bool(data.get('allDay', False))) # This ensures appointment can be dragged, update the DB and persist to the new location
+    print(f"Updating event ID: {event_id}, Data: {data}")
 
     try:
+        if not event_id:
+            raise ValueError("No event ID provided")
+        
         conn = sqlite3.connect(DB_PATH)
         c = conn.cursor()
         c.execute('''
             UPDATE events
-            SET start = ?, end = ?, allDay = ?
+            SET title = ?, start = ?, end = ?, allDay = ?, color = ?, notes = ?, client_id = ?, recurrence = ?, appointment_type = ?
             WHERE id = ?
-        ''', (start, end, all_day, event_id))
+        ''', (
+            data.get('title', ""),
+            data.get('start'),
+            data.get('end'),
+            int(bool(data.get('allDay', False))),
+            data.get('color', '#999999'),
+            data.get('notes', ''),
+            data.get('client_id'),
+            data.get('recurrence', 'none'),
+            data.get('appointment_type', ''),
+            event_id
+        ))
+        if c.rowcount == 0:
+            raise ValueError(f"No event found with ID: {event_id}")
         conn.commit()
         conn.close()
-        return jsonify({'status': 'success'})
+        print(f"Event {event_id} updated successfully")
+        return jsonify({'status': 'success', 'message': 'Event updated'})
     except Exception as e:
         print("Error updating event:", str(e))
         return jsonify({'status': 'error', 'message': str(e)}), 500
